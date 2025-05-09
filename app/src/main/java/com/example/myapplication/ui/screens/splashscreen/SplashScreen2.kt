@@ -19,7 +19,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SplashScreen2(
-    onNavigateToNextScreen: () -> Unit = {}
+    onNavigateToNextScreen: () -> Unit = {},
+    duration: Long = 1500
 ) {
     var startAnimation by remember { mutableStateOf(false) }
 
@@ -43,7 +44,7 @@ fun SplashScreen2(
 
     LaunchedEffect(key1 = true) {
         startAnimation = true
-        delay(2500)
+        delay(duration)
         onNavigateToNextScreen()
     }
 

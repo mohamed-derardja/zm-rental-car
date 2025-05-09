@@ -21,7 +21,8 @@ import androidx.compose.ui.draw.alpha
 
 @Composable
 fun SplashScreen6(
-    onNavigateToNextScreen: () -> Unit = {}
+    onNavigateToNextScreen: () -> Unit = {},
+    duration: Long = 2000
 ) {
     var animationStage by remember { mutableStateOf(0) }
 
@@ -104,11 +105,11 @@ fun SplashScreen6(
     )
 
     LaunchedEffect(Unit) {
-        delay(300)
+        delay(duration / 4)
         animationStage = 1  // Start growing
-        delay(1000)
+        delay(duration / 3)
         animationStage = 2  // Transform to logo
-        delay(1500)
+        delay(duration / 4)
         onNavigateToNextScreen()
     }
 

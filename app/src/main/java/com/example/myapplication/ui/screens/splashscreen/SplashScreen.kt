@@ -18,10 +18,11 @@ import androidx.compose.ui.draw.alpha
 
 @Composable
 fun SplashScreen(
-    onNavigateToNextScreen: () -> Unit = {}
+    onNavigateToNextScreen: () -> Unit = {},
+    duration: Long = 500
 ) {
     LaunchedEffect(key1 = true) {
-        delay(1500)
+        delay(duration)
         onNavigateToNextScreen()
     }
 
@@ -31,14 +32,9 @@ fun SplashScreen(
             .background(color = Color.White),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.img_3),
-            contentDescription = "Splash Screen Logo",
-            modifier = Modifier
-                .size(200.dp)
-                .alpha(0.8f),
-            contentScale = ContentScale.Fit
-        )
+
+
+
     }
 }
 
@@ -47,3 +43,5 @@ fun SplashScreen(
 fun SplashScreenPreview() {
     SplashScreen()
 }
+
+annotation class SplashScreen

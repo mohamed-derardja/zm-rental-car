@@ -18,7 +18,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
 fun SplashScreen5(
-    onNavigateToNextScreen: () -> Unit = {}
+    onNavigateToNextScreen: () -> Unit = {},
+    duration: Long = 2000
 ) {
     var animationStage by remember { mutableStateOf(0) }
 
@@ -71,13 +72,11 @@ fun SplashScreen5(
 
     LaunchedEffect(Unit) {
         // Stage 0: Initial bouncing
-        delay(1000)
-        // Stage 1: Start growing while bouncing
+        delay(duration / 4)
         animationStage = 1
-        delay(1500)
-        // Stage 2: Grow more significantly
+        delay(duration / 3)
         animationStage = 2
-        delay(1000)
+        delay(duration / 4)
         onNavigateToNextScreen()
     }
 

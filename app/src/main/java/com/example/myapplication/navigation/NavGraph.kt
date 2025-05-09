@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
+import android.util.Log
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.myapplication.ui.screens.auth.CreateAccountScreen
@@ -47,12 +48,16 @@ import com.example.myapplication.ui.screens.settings.SettingsScreen
 import com.example.myapplication.ui.screens.welcome.WelcomeScreen
 import com.example.myapplication.ui.screens.welcome.SecondScreen
 import com.example.myapplication.ui.screens.welcome.ThirdScreen
+import com.example.myapplication.ui.screens.splashscreen.SplashScreenSequence
 
 /**
  * Enum class that contains all the possible screens in our app
  * This makes it easier to manage screen routes and prevents typos
  */
 enum class Screen {
+    // Splash Screen Sequence
+    SplashSequence,
+
     // Onboarding Screens
     Welcome,
     Second,
@@ -108,12 +113,23 @@ enum class Screen {
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    startDestination: Screen = Screen.Welcome
+    startDestination: Screen = Screen.SplashSequence
 ) {
+    // Add global navigation logging
+    navController.addOnDestinationChangedListener { _, destination, _ ->
+        Log.d("Navigation", "Navigated to: ${destination.route}")
+    }
     NavHost(
         navController = navController,
         startDestination = startDestination.name
     ) {
+        // Splash Screen Sequence
+        composable(Screen.SplashSequence.name) {
+            SplashScreenSequence(
+                onNavigateToWelcome = { navController.navigate(Screen.Welcome.name) }
+            )
+        }
+
         // Onboarding Screens
         composable(Screen.Welcome.name) {
             WelcomeScreen(

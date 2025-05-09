@@ -18,7 +18,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
 internal fun SplashScreen4(
-    onNavigateToNextScreen: () -> Unit = {}
+    onNavigateToNextScreen: () -> Unit = {},
+    duration: Long = 2000
 ) {
     var startAnimation by remember { mutableStateOf(false) }
 
@@ -76,7 +77,7 @@ internal fun SplashScreen4(
 
     LaunchedEffect(Unit) {
         startAnimation = true
-        delay(2500)
+        delay(duration)
         onNavigateToNextScreen()
     }
 

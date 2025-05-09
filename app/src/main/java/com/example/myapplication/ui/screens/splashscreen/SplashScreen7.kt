@@ -28,7 +28,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
 internal fun SplashScreen7(
-    onNavigateToNextScreen: () -> Unit = {}
+    onNavigateToNextScreen: () -> Unit = {},
+    duration: Long = 1000
 ) {
     // Animation states
     var animationPhase by remember { mutableStateOf(0) }
@@ -121,11 +122,11 @@ internal fun SplashScreen7(
     )
 
     LaunchedEffect(Unit) {
-        delay(100) // Short initial delay
+        delay(duration / 4)
         animationPhase = 1 // Start entry animation
-        delay(2200) // Display time
+        delay(duration / 3)
         startExitAnimation = true // Start exit animations
-        delay(900) // Wait for exit animation
+        delay(duration / 4)
         onNavigateToNextScreen()
     }
 

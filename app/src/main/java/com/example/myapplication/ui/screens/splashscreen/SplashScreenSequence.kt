@@ -12,7 +12,9 @@ import com.example.myapplication.screens.splash.SplashScreen7
 import com.example.myapplication.ui.screens.welcome.WelcomeScreen
 
 @Composable
-fun SplashScreenSequence() {
+fun SplashScreenSequence(
+    onNavigateToWelcome: () -> Unit = {}
+) {
     var currentScreen by remember { mutableStateOf(1) }
 
     val navigateToNextScreen: () -> Unit = {
@@ -30,27 +32,34 @@ fun SplashScreenSequence() {
 
     when (currentScreen) {
         1 -> SplashScreen(
-            onNavigateToNextScreen = navigateToNextScreen
+            onNavigateToNextScreen = navigateToNextScreen,
+            duration = 900
         )
         2 -> SplashScreen2(
-            onNavigateToNextScreen = navigateToNextScreen
+            onNavigateToNextScreen = navigateToNextScreen,
+            duration = 2000
         )
         3 -> SplashScreen3(
-            onNavigateToNextScreen = navigateToNextScreen
+            onNavigateToNextScreen = navigateToNextScreen,
+            duration = 2000
         )
         4 -> SplashScreen4(
-            onNavigateToNextScreen = navigateToNextScreen
+            onNavigateToNextScreen = navigateToNextScreen,
+            duration = 1700
         )
         5 -> SplashScreen5(
-            onNavigateToNextScreen = navigateToNextScreen
+            onNavigateToNextScreen = navigateToNextScreen,
+            duration = 2000
         )
         6 -> SplashScreen6(
-            onNavigateToNextScreen = navigateToNextScreen
+            onNavigateToNextScreen S= navigateToNextScreen,
+            duration = 2000
         )
         7 -> SplashScreen7(
-            onNavigateToNextScreen = navigateToNextScreen
+            onNavigateToNextScreen = navigateToNextScreen,
+            duration = 1400
         )
-        else -> WelcomeScreen()
+        8 -> onNavigateToWelcome()
     }
 }
 

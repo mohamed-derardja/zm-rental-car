@@ -160,7 +160,7 @@ fun SignInScreen(
             }
             
             Spacer(modifier = Modifier.height(16.dp))
-            // Password
+
             Text(
                 text = "Password",
                 fontSize = 18.sp,

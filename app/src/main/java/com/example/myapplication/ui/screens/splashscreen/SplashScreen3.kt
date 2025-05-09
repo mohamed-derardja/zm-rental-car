@@ -18,7 +18,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
 fun SplashScreen3(
-    onNavigateToNextScreen: () -> Unit = {}
+    onNavigateToNextScreen: () -> Unit = {},
+    duration: Long = 2000
 ) {
     var currentStage by remember { mutableStateOf(0) }
 
@@ -78,13 +79,13 @@ fun SplashScreen3(
 
     LaunchedEffect(Unit) {
         // Stage 0 is initial setup
-        delay(300)
+        delay(duration / 4)
         currentStage = 1  // Start falling
-        delay(800)
+        delay(duration / 3)
         currentStage = 2  // First bounce
-        delay(300)
+        delay(duration / 4)
         currentStage = 3  // Settle
-        delay(1000)
+        delay(duration / 6)
         onNavigateToNextScreen()
     }
 
