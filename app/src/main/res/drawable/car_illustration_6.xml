@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Modern background shape -->
+    <path
+        android:fillColor="#ECF2FF"
+        android:pathData="M10,130 Q50,100 95,120 Q145,140 190,110 L190,180 L10,180 Z" />
+
+    <!-- Flowing curve under car -->
+    <path
+        android:fillColor="#D4E3FF"
+        android:pathData="M20,145 Q60,165 100,150 Q140,135 180,155 L180,170 L20,170 Z" />
+
+    <!-- Modern luxury car body -->
+    <path
+        android:fillColor="#4A64FE"
+        android:pathData="M30,120 L45,95 L65,85 L135,85 L155,95 L170,120 L170,130 L30,130 Z" />
+
+    <!-- Car roof with sleek styling -->
+    <path
+        android:fillColor="#2A3FD5"
+        android:pathData="M55,85 L65,65 L135,65 L145,85 Z" />
+
+    <!-- Panoramic windows -->
+    <path
+        android:fillColor="#E0E6FF"
+        android:pathData="M60,83 L70,68 L130,68 L140,83 Z" />
+
+    <!-- LED headlights -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,105 L45,100 L55,100 L57,105 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M145,105 L143,100 L153,100 L158,105 Z" />
+
+    <!-- Grille design -->
+    <path
+        android:fillColor="#1A1A1A"
+        android:pathData="M90,110 L110,110 L110,115 L90,115 Z" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1"
+        android:pathData="M92,112.5 L108,112.5" />
+
+    <!-- Wheels with premium styling -->
+    <path
+        android:fillColor="#1A1A1A"
+        android:pathData="M45,130a15,15 0,1 1,30 0a15,15 0,1 1,-30 0" />
+    <path
+        android:fillColor="#1A1A1A"
+        android:pathData="M125,130a15,15 0,1 1,30 0a15,15 0,1 1,-30 0" />
+
+    <!-- Premium wheel rims -->
+    <path
+        android:fillColor="#CCCCCC"
+        android:pathData="M60,130a6,6 0,1 1,-12 0a6,6 0,1 1,12 0" />
+    <path
+        android:fillColor="#CCCCCC"
+        android:pathData="M140,130a6,6 0,1 1,-12 0a6,6 0,1 1,12 0" />
+
+    <!-- Rim spokes -->
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M60,130 L60,118" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M60,130 L68,126" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M60,130 L68,134" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M60,130 L60,142" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M60,130 L52,134" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M60,130 L52,126" />
+    
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M140,130 L140,118" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M140,130 L148,126" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M140,130 L148,134" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M140,130 L140,142" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M140,130 L132,134" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M140,130 L132,126" />
+
+    <!-- Door lines -->
+    <path
+        android:strokeColor="#2A3FD5"
+        android:strokeWidth="1"
+        android:pathData="M80,85 L80,125" />
+    <path
+        android:strokeColor="#2A3FD5"
+        android:strokeWidth="1"
+        android:pathData="M120,85 L120,125" />
+
+    <!-- Premium car detail line -->
+    <path
+        android:strokeColor="#54A6FF"
+        android:strokeWidth="1"
+        android:pathData="M35,120 L165,120" />
+</vector> 
