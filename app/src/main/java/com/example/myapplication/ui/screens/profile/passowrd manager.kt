@@ -50,7 +50,7 @@ fun ChangePasswordScreen(
         // Back Button
         Box(
             modifier = Modifier
-                .padding(start = 15.dp, top = 20.dp)
+                .padding(top = 30.dp, start = 15.dp, end = 15.dp, bottom = 10.dp)
                 .size(50.dp)
                 .clip(CircleShape)
                 .background(Color.White)

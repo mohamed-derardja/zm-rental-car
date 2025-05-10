@@ -1,7 +1,6 @@
 package com.example.myapplication.ui.screens.payment
 
 // Removed AnimatedVisibility import
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,14 +17,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,7 +31,7 @@ import com.example.myapplication.ui.theme.poppins
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CompleteYourBookingScreen(
+fun CarBookingScreen(
     onBackClick: () -> Unit,
     onContinueClick: () -> Unit,
     onRebookClick: () -> Unit = onBackClick // By default, rebook will just go back to the previous screen
@@ -176,7 +173,7 @@ fun CompleteYourBookingScreen(
                     // Title "Complete Your Booking" at the center
                     Text(
                         text = "Complete Your Booking",
-                        fontSize = 21.sp,
+                        fontSize = 23.sp,
                         fontFamily = poppins,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.Black,
@@ -244,10 +241,11 @@ fun CompleteYourBookingScreen(
                             .height(52.dp)
                             .background(Color.White, RoundedCornerShape(14.dp)),
                         shape = RoundedCornerShape(14.dp),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                        colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFD9D9D9),
                             unfocusedBorderColor = Color(0xFFD9D9D9),
-                            containerColor = Color.White
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
                         ),
                     keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
@@ -313,10 +311,11 @@ fun CompleteYourBookingScreen(
                             .height(52.dp)
                             .background(Color.White, RoundedCornerShape(14.dp)),
                         shape = RoundedCornerShape(14.dp),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                        colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFD9D9D9),
                             unfocusedBorderColor = Color(0xFFD9D9D9),
-                            containerColor = Color.White
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
                         ),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Phone,
@@ -372,10 +371,11 @@ fun CompleteYourBookingScreen(
                             .height(52.dp)
                             .background(Color.White, RoundedCornerShape(14.dp)),
                         shape = RoundedCornerShape(14.dp),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                        colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFD9D9D9),
                             unfocusedBorderColor = Color(0xFFD9D9D9),
-                            containerColor = Color.White
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
                         ),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
@@ -437,10 +437,11 @@ fun CompleteYourBookingScreen(
                                 .background(Color.White, RoundedCornerShape(14.dp))
                                 .menuAnchor(),
                             shape = RoundedCornerShape(14.dp),
-                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                            colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color(0xFFD9D9D9),
                                 unfocusedBorderColor = Color(0xFFD9D9D9),
-                                containerColor = Color.White
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White
                             ),
                             isError = wilayaError != null
                         )
@@ -633,59 +634,13 @@ fun CompleteYourBookingScreen(
     }
 }
 
+@Preview(showBackground = true, device = "spec:width=411dp,height=891dp")
 @Composable
-fun FormField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    placeholder: String,
-    errorMessage: String? = null,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
-) {
-    Column {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray,
-            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-        )
-
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = { Text(placeholder) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF149459),
-                unfocusedBorderColor = Color.LightGray,
-                errorBorderColor = Color.Red,
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White
-            ),
-            keyboardOptions = keyboardOptions,
-            isError = errorMessage != null,
-            singleLine = true
-        )
-
-        if (errorMessage != null) {
-            Text(
-                text = errorMessage,
-                color = Color.Red,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(start = 4.dp, top = 4.dp)
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewCompleteYourBookingScreen() {
+fun PreviewCarBookingScreen() {
     MaterialTheme {
-        CompleteYourBookingScreen(
+        CarBookingScreen(
             onBackClick = {},
             onContinueClick = {}
         )
     }
-}
+} 

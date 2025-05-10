@@ -226,7 +226,7 @@ fun logoutScreen(
                                 .weight(1f)
                                 .padding(start = 8.dp)
                         ) {
-                            Text("Yes, Remove", color = Color.Black)
+                            Text("Yes", color = Color.Black)
                         }
                     }
                 }

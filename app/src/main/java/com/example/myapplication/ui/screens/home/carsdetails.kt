@@ -58,8 +58,8 @@ fun CarDetailsScreen(
                 isFavorite = isFavorite,
                 onFavoriteClick = { isFavorite = !isFavorite },
                 onBackPressed = onBackPressed,
-                title = "Car Booking",
-                showFavorite = false
+                title = "Car Details",
+                showFavorite = true
             )
 
             // Car Info Section
@@ -112,9 +112,9 @@ fun TopImageSection(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Title "Car Details" at the top center
+        // Title at the top center - Now using the passed title parameter
         Text(
-            text = "Car Details",
+            text = title,
             fontSize = 23.sp,
             fontFamily = poppins,
             fontWeight = FontWeight.Medium,
@@ -147,25 +147,27 @@ fun TopImageSection(
             }
         }
 
-        // Favorite button
-        Box(
-            modifier = Modifier
-                .padding(end = 15.dp, top = 20.dp)
-                .size(45.dp)
-                .clip(CircleShape)
-                .background(Color(0xFFF2F5FA))
-                .border(2.dp, Color.White, CircleShape)
-                .align(Alignment.TopEnd),
-        ) {
-            IconButton(
-                onClick = onFavoriteClick,
+        // Favorite button - Only show if showFavorite is true
+        if (showFavorite) {
+            Box(
+                modifier = Modifier
+                    .padding(end = 15.dp, top = 20.dp)
+                    .size(45.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFF2F5FA))
+                    .border(2.dp, Color.White, CircleShape)
+                    .align(Alignment.TopEnd),
             ) {
-                Icon(
-                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = "Favorite",
-                    tint = if (isFavorite) Color.Red else Color.Black,
-                    modifier = Modifier.size(20.dp)
-                )
+                IconButton(
+                    onClick = onFavoriteClick,
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "Favorite",
+                        tint = if (isFavorite) Color.Red else Color.Black,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
 
@@ -460,7 +462,7 @@ fun PriceAndBookSection(onBookNowClick: () -> Unit = {}) {
         modifier = Modifier
             .fillMaxWidth()
             .height(120.dp)
-            .padding(top = 17.dp)
+            .padding(top = 30.dp)
             .clip(RoundedCornerShape(0.dp))
             .background(Color(0xFFF2F5FA))
             .border(
@@ -468,7 +470,7 @@ fun PriceAndBookSection(onBookNowClick: () -> Unit = {}) {
                 color = Color.White,
                 shape = RoundedCornerShape(15.dp)
             )
-            .padding(vertical = 10.dp)
+            .padding(vertical = 20.dp)
     ) {
         Row(
             modifier = Modifier

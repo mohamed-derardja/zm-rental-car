@@ -52,7 +52,7 @@ fun SplashScreenSequence(
             duration = 2000
         )
         6 -> SplashScreen6(
-            
+            onNavigateToNextScreen = navigateToNextScreen,
             duration = 2000
         )
         7 -> SplashScreen7(

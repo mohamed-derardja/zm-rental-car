@@ -12,8 +12,16 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,12 +42,14 @@ import com.example.myapplication.R
 import com.example.myapplication.navigation.Screen
 import com.example.myapplication.ui.theme.poppins
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController = rememberNavController(),
     onBackClick: () -> Unit = { navController.popBackStack() }
 ) {
     val accentColor = Color(0xFF149459)
+    var showDeleteAccountSheet by remember { mutableStateOf(false) }
     
     // Calculate top padding based on status bar height
     val topPadding = with(LocalDensity.current) {
@@ -119,7 +129,7 @@ fun SettingsScreen(
                     text = "Password Manager",
                     accentColor = accentColor,
                     showDivider = true,
-                    onClick = { /* Navigate to password manager screen */ }
+                    onClick = { navController.navigate(Screen.PasswordManager.name) }
                 )
 
                 SettingItem(
@@ -128,8 +138,75 @@ fun SettingsScreen(
                     accentColor = accentColor,
                     showDivider = false,
                     textColor = Color.Red,
-                    onClick = { /* Show delete account confirmation */ }
+                    onClick = { showDeleteAccountSheet = true }
                 )
+            }
+        }
+        
+        // Delete Account Modal Sheet
+        if (showDeleteAccountSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showDeleteAccountSheet = false },
+                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                containerColor = Color.White,
+                tonalElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Delete Account",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = Color.Black
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Are you sure you want to delete your account?",
+                        fontSize = 14.sp,
+                        color = Color.DarkGray
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Button(
+                            onClick = { showDeleteAccountSheet = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2AA046)),
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp)
+                        ) {
+                            Text("Cancel", color = Color.White)
+                        }
+
+                        Button(
+                            onClick = {
+                                showDeleteAccountSheet = false
+                                // TODO: Perform account deletion logic here
+                                navController.navigate(Screen.SignIn.name) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEFEFEF)),
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 8.dp)
+                        ) {
+                            Text("Yes, Remove", color = Color.Black)
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
     }

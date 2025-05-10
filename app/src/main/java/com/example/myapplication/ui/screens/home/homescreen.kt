@@ -46,6 +46,8 @@ fun HomeScreen(
 ) {
     val scrollState = rememberScrollState()
     var searchQuery by remember { mutableStateOf("") }
+    var expandedBrands by remember { mutableStateOf(false) }
+    var selectedBrand by remember { mutableStateOf("All") }
 
     Box(
         modifier = Modifier
@@ -177,17 +179,8 @@ fun HomeScreen(
                 Text(
                     text = "Top Brands",
                     fontSize = 18.sp,
-
                     fontWeight = FontWeight.SemiBold,
                     color = Color.Black
-                )
-
-                Text(
-                    text = "View All",
-                    fontSize = 12.sp,
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.Normal,
-                    color = Color.Gray
                 )
             }
 
@@ -198,56 +191,59 @@ fun HomeScreen(
                 contentPadding = PaddingValues(horizontal = 15.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // First brand is always "All"
                 item {
                     CarBrandItem(
                         brandName = "All",
                         iconRes = R.drawable.all,
-                        isSelected = true
+                        isSelected = selectedBrand == "All",
+                        onClick = { 
+                            selectedBrand = "All"
+                            expandedBrands = !expandedBrands 
+                        }
                     )
                 }
 
-                item {
+                // Always visible brands
+                val visibleBrands = listOf(
+                    Pair("Tesla", R.drawable.teslatopbrand),
+                    Pair("BMW", R.drawable.bmwtopbrand),
+                    Pair("Audi", R.drawable.auditopbrand)
+                )
+
+                items(visibleBrands) { (brand, icon) ->
                     CarBrandItem(
-                        brandName = "Tesla",
-                        iconRes = R.drawable.teslatopbrand
+                        brandName = brand,
+                        iconRes = icon,
+                        isSelected = selectedBrand == brand,
+                        onClick = { selectedBrand = brand }
                     )
                 }
 
-                item {
-                    CarBrandItem(
-                        brandName = "BMW",
-                        iconRes = R.drawable.bmwtopbrand
+                // Expandable brands - only visible if expanded
+                if (expandedBrands) {
+                    val extendedBrands = listOf(
+                        Pair("Mercedes", R.drawable.mercedestopbrand),
+                        Pair("Volkswagen", R.drawable.wolswagen)
                     )
-                }
 
-                item {
-                    CarBrandItem(
-                        brandName = "Audi",
-                        iconRes = R.drawable.auditopbrand
-                    )
-                }
-
-                item {
-                    CarBrandItem(
-                        brandName = "Mercedes",
-                        iconRes = R.drawable.mercedestopbrand
-                    )
-                }
-
-                item {
-                    CarBrandItem(
-                        brandName = "Volkswagen",
-                        iconRes = R.drawable.wolswagen
-                    )
+                    items(extendedBrands) { (brand, icon) ->
+                        CarBrandItem(
+                            brandName = brand,
+                            iconRes = icon,
+                            isSelected = selectedBrand == brand,
+                            onClick = { selectedBrand = brand }
+                        )
+                    }
                 }
             }
+
             Spacer(modifier = Modifier.height(12.dp))
 
             // Top Rated Cars
             Text(
                 text = "Top Rated Cars",
                 fontSize = 18.sp,
-
                 fontWeight = FontWeight.SemiBold,
                 color = Color.Black,
                 modifier = Modifier.padding(horizontal = 20.dp)
@@ -283,7 +279,6 @@ fun HomeScreen(
             Text(
                 text = "Most Popular Car",
                 fontSize = 18.sp,
-
                 fontWeight = FontWeight.SemiBold,
                 color = Color.Black,
                 modifier = Modifier.padding(horizontal = 20.dp)
@@ -327,15 +322,18 @@ fun HomeScreen(
 fun CarBrandItem(
     brandName: String,
     iconRes: Int,
-    isSelected: Boolean = false
+    isSelected: Boolean = false,
+    onClick: () -> Unit = {}
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(60.dp)
+        modifier = Modifier
+            .width(60.dp)
+            .clickable(onClick = onClick)
     ) {
         Box(
             modifier = Modifier
-                .size(54.dp)
+                .size(50.dp)
                 .clip(CircleShape)
                 .background(Color.White)
                 .border(
@@ -356,10 +354,10 @@ fun CarBrandItem(
 
         Text(
             text = brandName,
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             fontFamily = poppins,
-            fontWeight = FontWeight.Normal,
-            color = if (isSelected) Color(0xFF149459) else Color.Black,
+            fontWeight = FontWeight.Medium,
+            color = if (isSelected) Color(0xFF149459) else Color.Gray,
             textAlign = TextAlign.Center
         )
     }

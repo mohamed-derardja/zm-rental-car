@@ -35,8 +35,6 @@ import com.example.myapplication.ui.screens.payment.PaymentDoneScreen
 import com.example.myapplication.ui.screens.payment.PaymentMethodScreen
 import com.example.myapplication.ui.screens.payment.PaymentPending
 import com.example.myapplication.ui.screens.payment.UnsuccessfulPaymentScreen
-import com.example.myapplication.ui.screens.payment.CarBookingScreen
-import com.example.myapplication.ui.screens.payment.CompleteYourBookingScreen
 import com.example.myapplication.ui.screens.profile.HelpCenterScreen
 import com.example.myapplication.ui.screens.profile.NotificationSettingsScreen
 import com.example.myapplication.ui.screens.profile.PrivacyPolicyScreen
@@ -49,6 +47,10 @@ import com.example.myapplication.ui.screens.welcome.WelcomeScreen
 import com.example.myapplication.ui.screens.welcome.SecondScreen
 import com.example.myapplication.ui.screens.welcome.ThirdScreen
 import com.example.myapplication.ui.screens.splashscreen.SplashScreenSequence
+import com.example.myapplication.ui.screens.auth.CompleteProfileScreen
+import com.example.myapplication.ui.screens.home.CarBookingScreen as HomeCarBookingScreen
+import com.example.myapplication.ui.screens.payment.CarBookingScreen as PaymentCarBookingScreen
+import com.example.myapplication.ui.screens.password.ChangePasswordScreen
 
 /**
  * Enum class that contains all the possible screens in our app
@@ -80,9 +82,16 @@ enum class Screen {
     // Booking Screens
     MyBooking,
     CompletedBooking,
+    CompleteYourBooking,
+    CarBooking,
     
     // Favorite Screen
     Favorite,
+    
+    // Settings Screens
+    Settings,
+    NotificationSettings,
+    PasswordManager,
     
     // Payment Screens
     PaymentMethod,
@@ -94,13 +103,11 @@ enum class Screen {
     Cancelation,
     
     // Profile Screens
-    Settings,
     HelpCenter,
     PrivacyPolicy,
     Logout,
     ProfileGeneral,
-    ProfileLocation,
-    NotificationSettings
+    ProfileLocation
 }
 
 /**
@@ -176,10 +183,24 @@ fun NavGraph(
         }
 
         composable(Screen.CompleteProfile.name) {
-            CompleteYourBookingScreen(
+            CompleteProfileScreen(
+                onBackClick = { navController.popBackStack() },
+                onProfileCompleted = { navController.navigateAndClear(Screen.Home.name) }
+            )
+        }
+
+        composable(Screen.CompleteYourBooking.name) {
+            PaymentCarBookingScreen(
                 onBackClick = { navController.popBackStack() },
                 onContinueClick = { navController.navigate(Screen.PaymentMethod.name) },
                 onRebookClick = { navController.navigate("${Screen.CarDetails.name}/1") }
+            )
+        }
+
+        composable(Screen.CarBooking.name) {
+            HomeCarBookingScreen(
+                onBackPressed = { navController.popBackStack() },
+                onContinue = { navController.navigate(Screen.CompleteYourBooking.name) }
             )
         }
 
@@ -203,7 +224,7 @@ fun NavGraph(
             CarDetailsScreen(
                 onBackPressed = { navController.popBackStack() },
                 onGalleryClick = { navController.navigate(Screen.Gallery.name) },
-                onBookNowClick = { navController.navigate(Screen.CompleteProfile.name) }
+                onBookNowClick = { navController.navigate(Screen.CarBooking.name) }
             )
         }
 
@@ -276,7 +297,7 @@ fun NavGraph(
             GalleryScreen(
                 onBackPressed = { navController.popBackStack() },
                 onAboutClick = { navController.navigate(Screen.CarDetails.name) },
-                onBookNowClick = { navController.navigate(Screen.CompleteProfile.name) }
+                onBookNowClick = { navController.navigate(Screen.CarBooking.name) }
             )
         }
 
@@ -375,6 +396,13 @@ fun NavGraph(
         composable(Screen.ProfileLocation.name) {
             UpdateProfileLocationScreen(
                 navController = navController
+            )
+        }
+
+        composable(Screen.PasswordManager.name) {
+            ChangePasswordScreen(
+                onBackClick = { navController.popBackStack() },
+                onPasswordChangeSuccess = { navController.popBackStack() }
             )
         }
     }

@@ -41,10 +41,10 @@ fun GalleryScreen(
     onAboutClick: () -> Unit = {},
     onBookNowClick: () -> Unit = {},
     photos: List<Int> = listOf(
-        R.drawable.mustang,
-        R.drawable.audi,
-        R.drawable.mustang,
-        R.drawable.audi2
+        R.drawable.ic_launcher_background,
+        R.drawable.ic_launcher_background,
+        R.drawable.ic_launcher_background,
+        R.drawable.ic_launcher_background
     )
 ) {
     var isFavorite by remember { mutableStateOf(false) }
@@ -62,10 +62,12 @@ fun GalleryScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             // Top Car Image Section with Back Button and Favorite Button
-            GalleryTopImageSection(
-                isFavorite = isFavorite,
-                onFavoriteClick = { isFavorite = !isFavorite },
-                onBackPressed = onBackPressed
+            TopImageSection(
+                isFavorite = false,
+                onFavoriteClick = {},
+                onBackPressed = onBackPressed,
+                title = "Car Details",
+                showFavorite = true
             )
 
             // Car Info Section (before tabs)
@@ -95,7 +97,7 @@ fun GalleryScreen(
         // Fixed Price and Book Now Section at the bottom
         Box(
             modifier = Modifier
-                .padding(top = 735.dp)
+                .padding(top = 720.dp)
                 .fillMaxWidth()
         ) {
             GalleryPriceAndBookSection(onBookNowClick = onBookNowClick)
@@ -116,7 +118,7 @@ fun GalleryTopImageSection(
     ) {
         // Main car image
         Image(
-            painter = painterResource(id = R.drawable.mustang),
+            painter = painterResource(id = R.drawable.ic_launcher_background),
             contentDescription = "Car Image",
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.fillMaxSize()

@@ -29,7 +29,8 @@ import com.example.myapplication.ui.theme.poppins
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompleteProfileScreen(
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onProfileCompleted: () -> Unit = {}
 ) {
     var fullName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
@@ -45,7 +46,7 @@ fun CompleteProfileScreen(
         // Back Button
         Box(
             modifier = Modifier
-                .padding(start = 15.dp, top = 40.dp)
+                .padding(start = 15.dp, top = 27.dp)
                 .size(50.dp)
                 .clip(CircleShape)
                 .background(Color.White)
@@ -67,7 +68,7 @@ fun CompleteProfileScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(top = 0.dp, bottom = 24.dp, start = 24.dp, end = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
@@ -353,20 +354,25 @@ fun CompleteProfileScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
+            // Add Continue Button at the bottom
+            Spacer(modifier = Modifier.height(24.dp))
+            
             Button(
-                onClick = { /* Handle profile completion */ },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF149459)),
-                shape = RoundedCornerShape(16.dp),
+                onClick = { onProfileCompleted() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF149459)
+                )
             ) {
                 Text(
-                    "Complete",
-                    color = Color.White,
+                    text = "Continue",
                     fontSize = 18.sp,
                     fontFamily = poppins,
                     fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
                     letterSpacing = 0.08.sp
                 )
             }
