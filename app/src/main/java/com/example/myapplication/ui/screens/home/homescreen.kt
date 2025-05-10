@@ -189,7 +189,7 @@ fun HomeScreen(
             // Brand Logos Row
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 15.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // First brand is always "All"
                 item {
@@ -208,6 +208,7 @@ fun HomeScreen(
                 val visibleBrands = listOf(
                     Pair("Tesla", R.drawable.teslatopbrand),
                     Pair("BMW", R.drawable.bmwtopbrand),
+                    Pair("Toyota", R.drawable.toyota),
                     Pair("Audi", R.drawable.auditopbrand)
                 )
 
