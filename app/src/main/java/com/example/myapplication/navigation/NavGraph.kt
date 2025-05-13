@@ -51,6 +51,7 @@ import com.example.myapplication.ui.screens.auth.CompleteProfileScreen
 import com.example.myapplication.ui.screens.home.CarBookingScreen as HomeCarBookingScreen
 import com.example.myapplication.ui.screens.payment.CarBookingScreen as PaymentCarBookingScreen
 import com.example.myapplication.ui.screens.password.ChangePasswordScreen
+import com.example.myapplication.ui.screens.auth.OTPVerificationScreen
 
 /**
  * Enum class that contains all the possible screens in our app
@@ -70,6 +71,7 @@ enum class Screen {
     CreateAccount,
     NewPassword,
     CompleteProfile,
+    OTPVerification,
     
     // Main Screens
     Home,
@@ -163,7 +165,7 @@ fun NavGraph(
         composable(Screen.SignIn.name) {
             SignInScreen(
                 onCreateAccountClick = { navController.navigate(Screen.CreateAccount.name) },
-                onForgotPasswordClick = { navController.navigate(Screen.NewPassword.name) },
+                onForgotPasswordClick = { navController.navigate(Screen.OTPVerification.name + "?fromForgotPassword=true") },
                 onSignInSuccess = { navController.navigateAndClear(Screen.Home.name) }
             )
         }
@@ -171,7 +173,7 @@ fun NavGraph(
         composable(Screen.CreateAccount.name) {
             CreateAccountScreen(
                 onSignInClick = { navController.navigate(Screen.SignIn.name) },
-                onCreateAccountSuccess = { navController.navigate(Screen.CompleteProfile.name) }
+                onCreateAccountSuccess = { navController.navigate(Screen.OTPVerification.name) }
             )
         }
 
@@ -186,6 +188,30 @@ fun NavGraph(
             CompleteProfileScreen(
                 onBackClick = { navController.popBackStack() },
                 onProfileCompleted = { navController.navigateAndClear(Screen.Home.name) }
+            )
+        }
+
+        composable(
+            route = "${Screen.OTPVerification.name}?fromForgotPassword={fromForgotPassword}",
+            arguments = listOf(
+                navArgument("fromForgotPassword") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) { backStackEntry ->
+            val fromForgotPassword = backStackEntry.arguments?.getBoolean("fromForgotPassword") ?: false
+            
+            OTPVerificationScreen(
+                onBackClick = { navController.popBackStack() },
+                onVerifySuccess = { 
+                    if (fromForgotPassword) {
+                        navController.navigate(Screen.NewPassword.name)
+                    } else {
+                        navController.navigate(Screen.CompleteProfile.name)
+                    }
+                },
+                fromForgotPassword = fromForgotPassword
             )
         }
 
