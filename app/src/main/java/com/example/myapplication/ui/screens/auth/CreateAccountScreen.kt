@@ -23,6 +23,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import com.example.myapplication.ui.theme.poppins
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
@@ -41,32 +44,28 @@ fun CreateAccountScreen(
     onSignInClick: () -> Unit = {},
     onCreateAccountSuccess: () -> Unit = {}
 ) {
-    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
     var termsAccepted by remember { mutableStateOf(true) }
+    var showTermsDialog by remember { mutableStateOf(false) }
 
     // Error state variables
-    var nameError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
+    var confirmPasswordError by remember { mutableStateOf<String?>(null) }
     var termsError by remember { mutableStateOf<String?>(null) }
     
-    // Validation functions
-    fun validateName(): Boolean {
-        return if (name.isBlank()) {
-            nameError = "Name is required"
-            false
-        } else if (name.length < 3) {
-            nameError = "Name is too short"
-            false
-        } else {
-            nameError = null
-            true
-        }
+    // Terms and Conditions Dialog
+    if (showTermsDialog) {
+        TermsAndConditionsDialog(
+            onDismiss = { showTermsDialog = false }
+        )
     }
     
+    // Validation functions
     fun validateEmail(): Boolean {
         val emailRegex = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$")
         return if (email.isBlank()) {
@@ -94,6 +93,19 @@ fun CreateAccountScreen(
         }
     }
     
+    fun validateConfirmPassword(): Boolean {
+        return if (confirmPassword.isBlank()) {
+            confirmPasswordError = "Confirm password is required"
+            false
+        } else if (confirmPassword != password) {
+            confirmPasswordError = "Passwords do not match"
+            false
+        } else {
+            confirmPasswordError = null
+            true
+        }
+    }
+    
     fun validateTerms(): Boolean {
         return if (!termsAccepted) {
             termsError = "You must accept the terms and conditions"
@@ -105,11 +117,11 @@ fun CreateAccountScreen(
     }
     
     fun validateForm(): Boolean {
-        val nameValid = validateName()
         val emailValid = validateEmail()
         val passwordValid = validatePassword()
+        val confirmPasswordValid = validateConfirmPassword()
         val termsValid = validateTerms()
-        return nameValid && emailValid && passwordValid && termsValid
+        return emailValid && passwordValid && confirmPasswordValid && termsValid
     }
 
     Box(
@@ -126,71 +138,7 @@ fun CreateAccountScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CreateAccountTopDecoration()
-            // Name
-            Text(
-                text = "Name",
-                fontSize = 18.sp,
-                fontFamily = poppins,
-                fontWeight = FontWeight.Normal,
-                color = Color.Black,
-                letterSpacing = 0.08.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = name,
-                onValueChange = { 
-                    name = it 
-                    if (nameError != null) validateName()
-                },
-                placeholder = { Text("Example: Ahmed",
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 15.sp,
-                    color = Color.Black.copy(alpha = 0.6f),
-                    letterSpacing = 0.08.sp) },
-                textStyle = androidx.compose.ui.text.TextStyle(
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 15.sp,
-                    color = Color.Black,
-                    letterSpacing = 0.08.sp
-                ),
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-                    .background(Color.White, RoundedCornerShape(14.dp)),
-                shape = RoundedCornerShape(14.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color(0xFFD9D9D9),
-                    unfocusedBorderColor = Color(0xFFD9D9D9),
-                    containerColor = Color.White,
-                    errorBorderColor = Color.Red
-                ),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
-                ),
-                isError = nameError != null
-            )
             
-            if (nameError != null) {
-                Text(
-                    text = nameError ?: "",
-                    color = Color.Red,
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 12.sp,
-                    letterSpacing = 0.08.sp,
-                    modifier = Modifier
-                        .align(Alignment.Start)
-                        .padding(start = 4.dp, top = 4.dp)
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
             // Email
             Text(
                 text = "Email",
@@ -271,6 +219,7 @@ fun CreateAccountScreen(
                 onValueChange = { 
                     password = it 
                     if (passwordError != null) validatePassword()
+                    if (confirmPassword.isNotEmpty()) validateConfirmPassword()
                 },
                 placeholder = { Text("123ZAbc!&",
                     fontFamily = poppins,
@@ -306,7 +255,7 @@ fun CreateAccountScreen(
                 },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done
+                    imeAction = ImeAction.Next
                 ),
                 isError = passwordError != null
             )
@@ -314,6 +263,77 @@ fun CreateAccountScreen(
             if (passwordError != null) {
                 Text(
                     text = passwordError ?: "",
+                    color = Color.Red,
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 12.sp,
+                    letterSpacing = 0.08.sp,
+                    modifier = Modifier
+                        .align(Alignment.Start)
+                        .padding(start = 4.dp, top = 4.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            // Confirm Password
+            Text(
+                text = "Confirm Password",
+                fontSize = 18.sp,
+                fontFamily = poppins,
+                fontWeight = FontWeight.Normal,
+                color = Color.Black,
+                letterSpacing = 0.08.sp,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { 
+                    confirmPassword = it 
+                    if (confirmPasswordError != null) validateConfirmPassword()
+                },
+                placeholder = { Text("Confirm your password",
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 15.sp,
+                    color = Color.Black.copy(alpha = 0.6f),
+                    letterSpacing = 0.08.sp) },
+                textStyle = androidx.compose.ui.text.TextStyle(
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 15.sp,
+                    color = Color.Black,
+                    letterSpacing = 0.08.sp
+                ),
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .background(Color.White, RoundedCornerShape(14.dp)),
+                shape = RoundedCornerShape(14.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = Color(0xFFD9D9D9),
+                    unfocusedBorderColor = Color(0xFFD9D9D9),
+                    containerColor = Color.White,
+                    errorBorderColor = Color.Red
+                ),
+                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    val image = if (confirmPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                    IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                        Icon(imageVector = image, contentDescription = null, tint = Color(0xFF149459))
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                isError = confirmPasswordError != null
+            )
+            
+            if (confirmPasswordError != null) {
+                Text(
+                    text = confirmPasswordError ?: "",
                     color = Color.Red,
                     fontFamily = poppins,
                     fontWeight = FontWeight.Normal,
@@ -371,7 +391,9 @@ fun CreateAccountScreen(
                         }
                     },
                     style = androidx.compose.ui.text.TextStyle.Default,
-                    onClick = { /* Handle click if needed */ }
+                    onClick = { 
+                        showTermsDialog = true
+                    }
                 )
             }
             
@@ -545,6 +567,145 @@ fun CreateAccountTopDecoration() {
         }
     }
 }
+
+@Composable
+fun TermsAndConditionsDialog(
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(500.dp)
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                // Title
+                Text(
+                    text = "Terms and Conditions",
+                    fontSize = 22.sp,
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF149459),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Scrollable content
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = termsAndConditionsText,
+                        fontSize = 14.sp,
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Black.copy(alpha = 0.8f),
+                        lineHeight = 20.sp
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Close button
+                Button(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF149459)),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Text(
+                        "Close",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
+}
+
+// Sample terms and conditions text
+private val termsAndConditionsText = """
+1. Acceptance of Terms
+
+By accessing or using the ZM Auto car rental application, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the application.
+
+2. User Registration
+
+2.1. To use certain features of the application, you must register for an account.
+2.2. You agree to provide accurate and complete information during registration.
+2.3. You are responsible for maintaining the confidentiality of your account credentials.
+2.4. You are responsible for all activities that occur under your account.
+
+3. Rental Terms
+
+3.1. All rental bookings are subject to vehicle availability.
+3.2. A valid driver's license and other identification documents may be required to complete a rental.
+3.3. Rental fees are as displayed in the application at the time of booking.
+3.4. Additional charges may apply for late returns, fuel refilling, damage to the vehicle, etc.
+
+4. Payment Terms
+
+4.1. Payment methods accepted are as indicated in the application.
+4.2. Rental fees and any security deposits must be paid prior to the commencement of the rental period.
+4.3. The security deposit will be refunded after the vehicle has been returned and inspected, subject to any deductions for damages or additional charges.
+
+5. Cancellation Policy
+
+5.1. Cancellations made more than 48 hours before the rental period may receive a full refund.
+5.2. Cancellations made within 48 hours of the rental period may be subject to a cancellation fee.
+5.3. No-shows may result in forfeiture of the full rental fee.
+
+6. Vehicle Use
+
+6.1. The vehicle must only be driven by the registered renter or additional drivers approved by ZM Auto.
+6.2. The vehicle must be used in accordance with all applicable laws and regulations.
+6.3. The vehicle must not be used for any illegal activities, racing, or off-road driving unless specifically permitted.
+6.4. Smoking is not permitted in the vehicles.
+
+7. Liability
+
+7.1. The renter is liable for any damage to the vehicle during the rental period, subject to the terms of any insurance coverage.
+7.2. ZM Auto is not liable for any personal property left in the vehicle.
+7.3. ZM Auto is not liable for any indirect or consequential damages arising from the use of the vehicle.
+
+8. Privacy Policy
+
+8.1. ZM Auto collects personal information as described in our Privacy Policy.
+8.2. By using the application, you consent to the collection and use of your information as described in the Privacy Policy.
+
+9. Modifications to Terms
+
+9.1. ZM Auto reserves the right to modify these Terms and Conditions at any time.
+9.2. Users will be notified of any material changes to these terms.
+
+10. Governing Law
+
+These Terms and Conditions shall be governed by and construed in accordance with the laws of [Country], without regard to its conflict of law provisions.
+
+11. Contact Information
+
+If you have any questions about these Terms and Conditions, please contact us at support@zmauto.com.
+
+Last Updated: January 1, 2024
+""".trimIndent()
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

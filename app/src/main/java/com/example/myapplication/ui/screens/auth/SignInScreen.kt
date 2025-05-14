@@ -43,6 +43,7 @@ fun SignInScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var rememberMe by remember { mutableStateOf(false) }
     
     // Error state variables
     var emailError by remember { mutableStateOf<String?>(null) }
@@ -235,6 +236,32 @@ fun SignInScreen(
             Box(
                 modifier = Modifier.fillMaxWidth()
             ) {
+                // Remember Me checkbox
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(top = 6.dp)
+
+                ) {
+                    Checkbox(
+                        checked = rememberMe,
+                        onCheckedChange = { rememberMe = it },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = Color(0xFF149459),
+                            uncheckedColor = Color(0xFF149459)
+                        )
+                    )
+                    Text(
+                        text = "Remember Me",
+                        color = Color.Black,
+                        fontFamily = FontFamily(Font(R.font.inter_regular)),
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp,
+                        letterSpacing = 0.08.sp,
+                    )
+                }
+                
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -257,6 +284,11 @@ fun SignInScreen(
             Button(
                 onClick = { 
                     if (validateForm()) {
+                        // Save credentials if "Remember Me" is checked
+                        if (rememberMe) {
+                            // In a real app, you would securely store credentials here
+                            // For example using EncryptedSharedPreferences
+                        }
                         // Call the sign-in success callback
                         onSignInSuccess()
                     }

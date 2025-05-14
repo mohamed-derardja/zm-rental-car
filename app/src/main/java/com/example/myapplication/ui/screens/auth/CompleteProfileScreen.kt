@@ -2,13 +2,17 @@ package com.example.myapplication.ui.screens.auth
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.poppins
 
@@ -32,11 +37,13 @@ fun CompleteProfileScreen(
     onBackClick: () -> Unit = {},
     onProfileCompleted: () -> Unit = {}
 ) {
-    var fullName by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
-    var gender by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
-    val genderOptions = listOf("Male", "Female")
+    var birthday by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
+    
+    val scrollState = rememberScrollState()
 
     Box(
         modifier = Modifier
@@ -51,6 +58,7 @@ fun CompleteProfileScreen(
                 .clip(CircleShape)
                 .background(Color.White)
                 .align(Alignment.TopStart)
+                .zIndex(1f) // Ensure back button stays on top
         ) {
             IconButton(
                 onClick = onBackClick,
@@ -65,298 +73,378 @@ fun CompleteProfileScreen(
             }
         }
 
+        // Main content in a scrollable column
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 0.dp, bottom = 24.dp, start = 24.dp, end = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(bottom = 96.dp) // Add padding at bottom for the button
         ) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(250.dp),
-                contentAlignment = Alignment.Center
+                    .weight(1f)
+                    .verticalScroll(scrollState)
+                    .padding(start = 24.dp, end = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Big star (background, behind the main one)
-                Image(
-                    painter = painterResource(id = R.drawable.bigblackstar),
-                    contentDescription = "Big Star Background",
+                Box(
                     modifier = Modifier
-                        .size(width = 320.dp, height = 210.dp)
-                        .align(Alignment.Center)
-                        .offset(x = 60.dp, y = 40.dp)
-                )
-                // Big star (main sparkle)
-                Image(
-                    painter = painterResource(id = R.drawable.bigblackstar),
-                    contentDescription = "Big Star",
-                    modifier = Modifier
-                        .size(width = 320.dp, height = 210.dp)
-                        .align(Alignment.Center)
-                        .offset(x = (-20).dp)
-                )
-                // Small star, top left
-                Image(
-                    painter = painterResource(id = R.drawable.smallblackstar),
-                    contentDescription = "Small Star",
-                    modifier = Modifier
-                        .size(22.dp)
-                        .align(Alignment.TopStart)
-                        .offset(x = 15.dp, y = 80.dp)
-                )
-                // Medium star, top right
-                Image(
-                    painter = painterResource(id = R.drawable.medblackstar),
-                    contentDescription = "Medium Star",
-                    modifier = Modifier
-                        .size(38.dp)
-                        .align(Alignment.TopEnd)
-                        .offset(x = (-65).dp, y = 20.dp)
-                )
-
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .offset(y = 13.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .fillMaxWidth()
+                        .height(250.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Complete Your Profile",
-                        fontSize = 31.sp,
-                        fontFamily = poppins,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF030303),
-                        letterSpacing = 0.10.sp
+                    // Big star (background, behind the main one)
+                    Image(
+                        painter = painterResource(id = R.drawable.bigblackstar),
+                        contentDescription = "Big Star Background",
+                        modifier = Modifier
+                            .size(width = 320.dp, height = 210.dp)
+                            .align(Alignment.Center)
+                            .offset(x = 60.dp, y = 40.dp)
                     )
-                    Spacer(modifier = Modifier.height(15.dp))
+                    // Big star (main sparkle)
+                    Image(
+                        painter = painterResource(id = R.drawable.bigblackstar),
+                        contentDescription = "Big Star",
+                        modifier = Modifier
+                            .size(width = 320.dp, height = 210.dp)
+                            .align(Alignment.Center)
+                            .offset(x = (-20).dp)
+                    )
+                    // Small star, top left
+                    Image(
+                        painter = painterResource(id = R.drawable.smallblackstar),
+                        contentDescription = "Small Star",
+                        modifier = Modifier
+                            .size(22.dp)
+                            .align(Alignment.TopStart)
+                            .offset(x = 15.dp, y = 80.dp)
+                    )
+                    // Medium star, top right
+                    Image(
+                        painter = painterResource(id = R.drawable.medblackstar),
+                        contentDescription = "Medium Star",
+                        modifier = Modifier
+                            .size(38.dp)
+                            .align(Alignment.TopEnd)
+                            .offset(x = (-65).dp, y = 20.dp)
+                    )
+
                     Column(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .offset(y = 13.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "You're 80% Done",
-                            fontSize = 16.sp,
+                            text = "Complete Your Profile",
+                            fontSize = 31.sp,
                             fontFamily = poppins,
-                            fontWeight = FontWeight.Normal,
-                            color = Color.Black,
-                            letterSpacing = 0.sp,
-                            textAlign = TextAlign.Center
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF030303),
+                            letterSpacing = 0.10.sp
                         )
-                        Text(
-                            text = "Just a Few More Details to Complete Your Profile!",
-                            fontSize = 15.sp,
-                            fontFamily = poppins,
-                            fontWeight = FontWeight.Normal,
-                            color = Color.Black,
-                            letterSpacing = 0.sp,
-                            textAlign = TextAlign.Center
+                        Spacer(modifier = Modifier.height(15.dp))
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "You're 80% Done",
+                                fontSize = 16.sp,
+                                fontFamily = poppins,
+                                fontWeight = FontWeight.Normal,
+                                color = Color.Black,
+                                letterSpacing = 0.sp,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "Just a Few More Details to Complete Your Profile!",
+                                fontSize = 15.sp,
+                                fontFamily = poppins,
+                                fontWeight = FontWeight.Normal,
+                                color = Color.Black,
+                                letterSpacing = 0.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+
+                // Profile Image
+                Box(
+                    modifier = Modifier
+                        .padding(start = 20.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(200.dp)
+                            .clip(CircleShape)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.account),
+                            contentDescription = "Profile Image",
+                            modifier = Modifier.size(180.dp)
+                        )
+                    }
+                    
+                    // Edit button
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .offset(x = 120.dp, y = 135.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF149459))
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.vectorpen),
+                            contentDescription = "Edit Profile",
+                            modifier = Modifier
+                                .size(16.dp)
+                                .align(Alignment.Center)
                         )
                     }
                 }
-            }
 
-            // Profile Image
-            Box(
-                modifier = Modifier
-                    .padding(start = 20.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(200.dp)
-                        .clip(CircleShape)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.account),
-                        contentDescription = "Profile Image",
-                        modifier = Modifier.size(180.dp)
-                    )
-                }
-                
-                // Edit button
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .offset(x = 120.dp, y = 135.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF149459))
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.vectorpen),
-                        contentDescription = "Edit Profile",
-                        modifier = Modifier
-                            .size(16.dp)
-                            .align(Alignment.Center)
-                    )
-                }
-            }
-
-            // Full Name Field
-            Text(
-                text = "Full Name",
-                fontSize = 18.sp,
-                fontFamily = poppins,
-                fontWeight = FontWeight.Normal,
-                color = Color.Black,
-                letterSpacing = 0.08.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = fullName,
-                onValueChange = { fullName = it },
-                placeholder = { Text("Example: Ahmed Ahmad",
+                // First Name Field
+                Text(
+                    text = "First Name",
+                    fontSize = 18.sp,
                     fontFamily = poppins,
                     fontWeight = FontWeight.Normal,
-                    fontSize = 16.sp,
-                    color = Color.Black.copy(alpha = 0.6f),
-                    letterSpacing = 0.08.sp) },
-                
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-                    .background(Color.White, RoundedCornerShape(14.dp)),
-                shape = RoundedCornerShape(14.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color(0xFFD9D9D9),
-                    unfocusedBorderColor = Color(0xFFD9D9D9),
-                    containerColor = Color.White
-                ),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
+                    color = Color.Black,
+                    letterSpacing = 0.08.sp,
+                    modifier = Modifier.align(Alignment.Start)
                 )
-            )
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Phone Number Field with prefix
-            Text(
-                text = "Phone Number",
-                fontSize = 18.sp,
-                fontFamily = poppins,
-                fontWeight = FontWeight.Normal,
-                color = Color.Black,
-                letterSpacing = 0.08.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = phoneNumber,
-                onValueChange = { phoneNumber = it },
-                placeholder = { Text("Enter your Phone Number",
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 16.sp,
-                    color = Color.Black.copy(alpha = 0.6f),
-                    letterSpacing = 0.08.sp) },
-
-                leadingIcon = {
-                    Text(
-                        text = "+213 |",
-                        fontFamily = poppins,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 16.sp,
-                        color = Color.Black,
-                        modifier = Modifier.padding(start = 16.dp, end = 8.dp)
-                    )
-                },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-                    .background(Color.White, RoundedCornerShape(14.dp)),
-                shape = RoundedCornerShape(14.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color(0xFFD9D9D9),
-                    unfocusedBorderColor = Color(0xFFD9D9D9),
-                    containerColor = Color.White
-                ),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
-                    imeAction = ImeAction.Next
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Gender Field with Dropdown
-            Text(
-                text = "Gender",
-                fontSize = 18.sp,
-                fontFamily = poppins,
-                fontWeight = FontWeight.Normal,
-                color = Color.Black,
-                letterSpacing = 0.08.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = it },
-                modifier = Modifier.fillMaxWidth()
-            ) {
                 OutlinedTextField(
-                    value = gender,
-                    onValueChange = {},
-                    readOnly = true,
-                    placeholder = { Text("Select",
+                    value = firstName,
+                    onValueChange = { firstName = it },
+                    placeholder = { Text("Example: Ahmed",
                         fontFamily = poppins,
                         fontWeight = FontWeight.Normal,
                         fontSize = 16.sp,
-                        color = Color.Black,
+                        color = Color.Black.copy(alpha = 0.6f),
                         letterSpacing = 0.08.sp) },
-
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = "Select Gender",
-                            tint = Color.Black
-                        )
-                    },
+                    
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
-                        .menuAnchor()
                         .background(Color.White, RoundedCornerShape(14.dp)),
                     shape = RoundedCornerShape(14.dp),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         focusedBorderColor = Color(0xFFD9D9D9),
                         unfocusedBorderColor = Color(0xFFD9D9D9),
                         containerColor = Color.White
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
                     )
                 )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    genderOptions.forEach { option ->
-                        DropdownMenuItem(
-                            text = { 
-                                Text(
-                                    text = option,
-                                    fontFamily = poppins,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 15.sp
-                                )
-                            },
-                            onClick = {
-                                gender = option
-                                expanded = false
-                            }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Last Name Field
+                Text(
+                    text = "Last Name",
+                    fontSize = 18.sp,
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.Black,
+                    letterSpacing = 0.08.sp,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = lastName,
+                    onValueChange = { lastName = it },
+                    placeholder = { Text("Example: Ahmad",
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 16.sp,
+                        color = Color.Black.copy(alpha = 0.6f),
+                        letterSpacing = 0.08.sp) },
+                    
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .background(Color.White, RoundedCornerShape(14.dp)),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFFD9D9D9),
+                        unfocusedBorderColor = Color(0xFFD9D9D9),
+                        containerColor = Color.White
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Phone Number Field with prefix
+                Text(
+                    text = "Phone Number",
+                    fontSize = 18.sp,
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.Black,
+                    letterSpacing = 0.08.sp,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = phoneNumber,
+                    onValueChange = { phoneNumber = it },
+                    placeholder = { Text("Enter your Phone Number",
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 16.sp,
+                        color = Color.Black.copy(alpha = 0.6f),
+                        letterSpacing = 0.08.sp) },
+
+                    leadingIcon = {
+                        Text(
+                            text = "+213 |",
+                            fontFamily = poppins,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 16.sp,
+                            color = Color.Black,
+                            modifier = Modifier.padding(start = 16.dp, end = 8.dp)
                         )
-                    }
-                }
+                    },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .background(Color.White, RoundedCornerShape(14.dp)),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFFD9D9D9),
+                        unfocusedBorderColor = Color(0xFFD9D9D9),
+                        containerColor = Color.White
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Phone,
+                        imeAction = ImeAction.Next
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Birthday Field
+                Text(
+                    text = "Birthday",
+                    fontSize = 18.sp,
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.Black,
+                    letterSpacing = 0.08.sp,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = birthday,
+                    onValueChange = { birthday = it },
+                    placeholder = { Text("DD/MM/YYYY",
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 16.sp,
+                        color = Color.Black.copy(alpha = 0.6f),
+                        letterSpacing = 0.08.sp) },
+                    
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Select Date",
+                            tint = Color(0xFF149459),
+                            modifier = Modifier.clickable { /* Open date picker if needed */ }
+                        )
+                    },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .background(Color.White, RoundedCornerShape(14.dp)),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFFD9D9D9),
+                        unfocusedBorderColor = Color(0xFFD9D9D9),
+                        containerColor = Color.White
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Location Field
+                Text(
+                    text = "Location",
+                    fontSize = 18.sp,
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.Black,
+                    letterSpacing = 0.08.sp,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = location,
+                    onValueChange = { location = it },
+                    placeholder = { Text("Enter your location",
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 16.sp,
+                        color = Color.Black.copy(alpha = 0.6f),
+                        letterSpacing = 0.08.sp) },
+                    
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Select Location",
+                            tint = Color(0xFF149459)
+                        )
+                    },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .background(Color.White, RoundedCornerShape(14.dp)),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        focusedBorderColor = Color(0xFFD9D9D9),
+                        unfocusedBorderColor = Color(0xFFD9D9D9),
+                        containerColor = Color.White
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done
+                    )
+                )
+                
+                // Add spacer at the bottom for better scrolling
+                Spacer(modifier = Modifier.height(24.dp))
             }
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            // Add Continue Button at the bottom
-            Spacer(modifier = Modifier.height(24.dp))
-            
+        }
+        
+        // Fixed position button at the bottom
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+        ) {
             Button(
                 onClick = { onProfileCompleted() },
                 modifier = Modifier

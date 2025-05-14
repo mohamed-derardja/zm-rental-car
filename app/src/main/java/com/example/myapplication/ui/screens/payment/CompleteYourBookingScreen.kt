@@ -42,7 +42,8 @@ fun CarBookingScreen(
     }
 
     // Form state
-    var fullName by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var selectedWilaya by remember { mutableStateOf("") }
@@ -50,22 +51,36 @@ fun CarBookingScreen(
     var isSubmitting by remember { mutableStateOf(false) }
 
     // Form validation state
-    var fullNameError by remember { mutableStateOf<String?>(null) }
+    var firstNameError by remember { mutableStateOf<String?>(null) }
+    var lastNameError by remember { mutableStateOf<String?>(null) }
     var phoneNumberError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var wilayaError by remember { mutableStateOf<String?>(null) }
     var driverLicenseError by remember { mutableStateOf<String?>(null) }
 
     // Validation functions
-    fun validateFullName(): Boolean {
-        return if (fullName.isBlank()) {
-            fullNameError = "Name is required"
+    fun validateFirstName(): Boolean {
+        return if (firstName.isBlank()) {
+            firstNameError = "First name is required"
             false
-        } else if (fullName.length < 3) {
-            fullNameError = "Name is too short"
+        } else if (firstName.length < 2) {
+            firstNameError = "First name is too short"
             false
         } else {
-            fullNameError = null
+            firstNameError = null
+            true
+        }
+    }
+
+    fun validateLastName(): Boolean {
+        return if (lastName.isBlank()) {
+            lastNameError = "Last name is required"
+            false
+        } else if (lastName.length < 2) {
+            lastNameError = "Last name is too short"
+            false
+        } else {
+            lastNameError = null
             true
         }
     }
@@ -118,13 +133,14 @@ fun CarBookingScreen(
     }
 
     fun validateForm(): Boolean {
-        val nameValid = validateFullName()
+        val firstNameValid = validateFirstName()
+        val lastNameValid = validateLastName()
         val phoneValid = validatePhoneNumber()
         val emailValid = validateEmail()
         val wilayaValid = validateWilaya()
         val licenseValid = validateDriverLicense()
 
-        return nameValid && phoneValid && emailValid && wilayaValid && licenseValid
+        return firstNameValid && lastNameValid && phoneValid && emailValid && wilayaValid && licenseValid
     }
 
     // Available wilayas
@@ -139,24 +155,22 @@ fun CarBookingScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = topPadding)
-                .padding(bottom = 96.dp) // Add padding at bottom for the button
                 .verticalScroll(scrollState)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-                ) {
-                    // Back button
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .size(45.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFFFFFFF))
-                            .clickable { onBackClick() }
-                    ) {
+                    .padding(top = 30.dp, start = 15.dp, end = 15.dp, bottom = 10.dp)
+            ) {
+                // Back button
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .size(45.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFFFFFFF))
+                        .clickable { onBackClick() }
+                    )   {
                         IconButton(
                             onClick = { onBackClick() },
                             modifier = Modifier.size(45.dp)
@@ -209,10 +223,10 @@ fun CarBookingScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Full Name Field
+                // First Name Field
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Full Name",
+                        text = "First Name",
                         fontSize = 18.sp,
                         fontFamily = poppins,
                         fontWeight = FontWeight.Normal,
@@ -223,12 +237,12 @@ fun CarBookingScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
-                    value = fullName,
+                    value = firstName,
                     onValueChange = {
-                        fullName = it
-                        if (fullNameError != null) validateFullName()
+                        firstName = it
+                        if (firstNameError != null) validateFirstName()
                     },
-                        placeholder = { Text("Example: Ahmed Ahmad",
+                        placeholder = { Text("First Name",
                             fontFamily = poppins,
                             fontWeight = FontWeight.Normal,
                             fontSize = 16.sp,
@@ -251,12 +265,72 @@ fun CarBookingScreen(
                             keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Next
                         ),
-                        isError = fullNameError != null
+                        isError = firstNameError != null
                     )
                     
-                    if (fullNameError != null) {
+                    if (firstNameError != null) {
                         Text(
-                            text = fullNameError ?: "",
+                            text = firstNameError ?: "",
+                            color = Color.Red,
+                            fontFamily = poppins,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 12.sp,
+                            letterSpacing = 0.08.sp,
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Last Name Field
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Last Name",
+                        fontSize = 18.sp,
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Black,
+                        letterSpacing = 0.08.sp,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                    value = lastName,
+                    onValueChange = {
+                        lastName = it
+                        if (lastNameError != null) validateLastName()
+                    },
+                        placeholder = { Text("Last Name",
+                            fontFamily = poppins,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 16.sp,
+                            color = Color.Black.copy(alpha = 0.6f),
+                            letterSpacing = 0.08.sp) },
+                        
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .background(Color.White, RoundedCornerShape(14.dp)),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD9D9D9),
+                            unfocusedBorderColor = Color(0xFFD9D9D9),
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
+                        ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                        ),
+                        isError = lastNameError != null
+                    )
+                    
+                    if (lastNameError != null) {
+                        Text(
+                            text = lastNameError ?: "",
                             color = Color.Red,
                             fontFamily = poppins,
                             fontWeight = FontWeight.Normal,
@@ -580,18 +654,9 @@ fun CarBookingScreen(
                 }
                 
                 // Add extra padding at bottom to ensure content isn't hidden behind the button
-                Spacer(modifier = Modifier.height(20.dp))
-                }
-            }
-
-        // Fixed Continue Button at the bottom
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                    .background(Color.White)
-                .padding(horizontal = 24.dp, vertical = 20.dp)
-            ) {
+                Spacer(modifier = Modifier.height(40.dp))
+                
+                // Continue Button
                 Button(
                     onClick = {
                         if (validateForm()) {
@@ -604,7 +669,7 @@ fun CarBookingScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF149459),
                         disabledContainerColor = Color(0xFFABD6C2)
@@ -615,11 +680,11 @@ fun CarBookingScreen(
                         if (!isSubmitting) {
                             Text(
                                 text = "Continue",
-                                    fontSize = 18.sp,
-                            fontFamily = poppins,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White,
-                            letterSpacing = 0.08.sp
+                                fontSize = 18.sp,
+                                fontFamily = poppins,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White,
+                                letterSpacing = 0.08.sp
                             )
                         } else {
                             CircularProgressIndicator(
@@ -627,8 +692,12 @@ fun CarBookingScreen(
                                 modifier = Modifier.size(24.dp),
                                 strokeWidth = 2.dp
                             )
+                        }
                     }
                 }
+                
+                // Add some extra space at the bottom for better spacing
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }

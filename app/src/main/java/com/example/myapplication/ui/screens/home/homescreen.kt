@@ -47,7 +47,7 @@ fun HomeScreen(
     val scrollState = rememberScrollState()
     var searchQuery by remember { mutableStateOf("") }
     var expandedBrands by remember { mutableStateOf(false) }
-    var selectedBrand by remember { mutableStateOf("All") }
+    var selectedBrand by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -326,6 +326,13 @@ fun CarBrandItem(
     isSelected: Boolean = false,
     onClick: () -> Unit = {}
 ) {
+    // Special case for "All" - only show border when explicitly selected
+    val showBorder = when {
+        brandName == "All" && isSelected -> true   // "All" is selected, show border
+        brandName != "All" && isSelected -> true   // Other brand is selected, show border
+        else -> false                              // Not selected, no border
+    }
+    
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -338,8 +345,8 @@ fun CarBrandItem(
                 .clip(CircleShape)
                 .background(Color.White)
                 .border(
-                    width = if (isSelected) 1.5.dp else 0.dp,
-                    color = if (isSelected) Color(0xFF149459) else Color.Transparent,
+                    width = if (showBorder) 1.5.dp else 0.dp,
+                    color = if (showBorder) Color(0xFF149459) else Color.Transparent,
                     shape = CircleShape
                 ),
             contentAlignment = Alignment.Center

@@ -322,7 +322,7 @@ fun NavGraph(
         composable(Screen.Gallery.name) {
             GalleryScreen(
                 onBackPressed = { navController.popBackStack() },
-                onAboutClick = { navController.navigate(Screen.CarDetails.name) },
+                onAboutClick = { navController.popBackStack() },
                 onBookNowClick = { navController.navigate(Screen.CarBooking.name) }
             )
         }

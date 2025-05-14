@@ -378,7 +378,7 @@ fun CarRenterSection() {
                 .padding(horizontal = 12.dp)
         ) {
             Text(
-                text = "Zinou",
+                text = "ZM Auto",
                 fontSize = 16.sp,
                 fontFamily = poppins,
                 fontWeight = FontWeight.SemiBold,
@@ -386,7 +386,7 @@ fun CarRenterSection() {
             )
 
             Text(
-                text = "Car renter",
+                text = "Help Service",
                 fontSize = 9.sp,
                 fontFamily = poppins,
                 fontWeight = FontWeight.SemiBold,
