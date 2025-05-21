@@ -707,6 +707,32 @@ If you have any questions about these Terms and Conditions, please contact us at
 Last Updated: January 1, 2024
 """.trimIndent()
 
+@Composable
+fun SocialButton(
+    iconRes: String,
+    onClick: () -> Unit = {}
+) {
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .background(Color.White, RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(
+                id = when (iconRes) {
+                    "facebook" -> R.drawable.facebook
+                    "google" -> R.drawable.google
+                    else -> R.drawable.facebook
+                }
+            ),
+            contentDescription = "Social Login Button",
+            modifier = Modifier.size(24.dp)
+        )
+    }
+}
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun CreateAccountScreenPreview() {

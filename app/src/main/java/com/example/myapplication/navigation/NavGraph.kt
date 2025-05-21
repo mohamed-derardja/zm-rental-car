@@ -128,6 +128,7 @@ fun NavGraph(
     navController.addOnDestinationChangedListener { _, destination, _ ->
         Log.d("Navigation", "Navigated to: ${destination.route}")
     }
+
     NavHost(
         navController = navController,
         startDestination = startDestination.name
@@ -164,8 +165,8 @@ fun NavGraph(
         // Authentication Screens
         composable(Screen.SignIn.name) {
             SignInScreen(
-                onCreateAccountClick = { navController.navigate(Screen.CreateAccount.name) },
-                onForgotPasswordClick = { navController.navigate(Screen.OTPVerification.name + "?fromForgotPassword=true") },
+                onNavigateToRegister = { navController.navigate(Screen.CreateAccount.name) },
+                onNavigateToForgotPassword = { navController.navigate("${Screen.OTPVerification.name}?fromForgotPassword=true") },
                 onSignInSuccess = { navController.navigateAndClear(Screen.Home.name) }
             )
         }
@@ -215,21 +216,6 @@ fun NavGraph(
             )
         }
 
-        composable(Screen.CompleteYourBooking.name) {
-            PaymentCarBookingScreen(
-                onBackClick = { navController.popBackStack() },
-                onContinueClick = { navController.navigate(Screen.PaymentMethod.name) },
-                onRebookClick = { navController.navigate("${Screen.CarDetails.name}/1") }
-            )
-        }
-
-        composable(Screen.CarBooking.name) {
-            HomeCarBookingScreen(
-                onBackPressed = { navController.popBackStack() },
-                onContinue = { navController.navigate(Screen.CompleteYourBooking.name) }
-            )
-        }
-
         // Main Screens
         composable(Screen.Home.name) {
             HomeScreen(
@@ -258,7 +244,6 @@ fun NavGraph(
             Filter(
                 onBackClick = { navController.popBackStack() },
                 onApplyFilters = { 
-                    // Apply filter logic
                     navController.popBackStack()
                 }
             )
@@ -280,6 +265,7 @@ fun NavGraph(
             )
         }
 
+        // Booking Screens
         composable(Screen.MyBooking.name) {
             MyBookingsScreen(
                 navController = navController,
@@ -300,9 +286,23 @@ fun NavGraph(
                 onProfileClick = { navController.navigate(Screen.Profile.name) },
                 onUpcomingTabClick = { navController.navigate(Screen.MyBooking.name) },
                 onRebookClick = { 
-                    // Navigate to CarDetails with a placeholder carId
                     navController.navigate("${Screen.CarDetails.name}/rebook") 
                 }
+            )
+        }
+
+        composable(Screen.CarBooking.name) {
+            HomeCarBookingScreen(
+                onBackPressed = { navController.popBackStack() },
+                onContinue = { navController.navigate(Screen.CompleteYourBooking.name) }
+            )
+        }
+
+        composable(Screen.CompleteYourBooking.name) {
+            PaymentCarBookingScreen(
+                onBackClick = { navController.popBackStack() },
+                onContinueClick = { navController.navigate(Screen.PaymentMethod.name) },
+                onRebookClick = { navController.navigate("${Screen.CarDetails.name}/1") }
             )
         }
 
@@ -440,7 +440,7 @@ fun NavGraph(
  */
 fun NavHostController.navigateAndClear(route: String) {
     navigate(route) {
-        popUpTo(graph.startDestinationId) {
+        popUpTo(0) {
             inclusive = true
         }
     }

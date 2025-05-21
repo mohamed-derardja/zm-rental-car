@@ -1,5 +1,8 @@
 package com.example.myapplication.ui.components
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,8 +15,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.myapplication.R
-import com.github.dhaval2404.imagepicker.ImagePicker
-import com.github.dhaval2404.imagepicker.constant.ImageProvider
+import android.content.Intent
+import androidx.activity.result.ActivityResultLauncher
 
 @Composable
 fun ImagePicker(
@@ -22,7 +25,18 @@ fun ImagePicker(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    var showImagePicker by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val uri = result.data?.data
+            uri?.let {
+                onImageSelected(it.toString())
+            }
+        }
+    }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -47,7 +61,7 @@ fun ImagePicker(
                 )
             } else {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_add_photo),
+                    painter = painterResource(id = R.drawable.edit_icon),
                     contentDescription = "Add Photo",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -57,27 +71,42 @@ fun ImagePicker(
 
         // Image Picker Button
         Button(
-            onClick = { showImagePicker = true },
+            onClick = { showDialog = true },
             modifier = Modifier.padding(8.dp)
         ) {
             Text(text = if (imageUri == null) "Select Image" else "Change Image")
         }
-
-        // Handle Image Picker
-        if (showImagePicker) {
-            LaunchedEffect(Unit) {
-                ImagePicker.with(context)
-                    .crop()
-                    .compress(1024)
-                    .maxResultSize(1080, 1080)
-                    .provider(ImageProvider.BOTH)
-                    .createIntent { intent ->
-                        context.startActivityForResult(intent, ImagePicker.REQUEST_CODE)
-                    }
-                showImagePicker = false
-            }
-        }
     }
+
+    // Image Picker Dialog
+    if (showDialog) {
+        ImagePickerDialog(
+            onDismiss = { showDialog = false },
+            onCameraClick = {
+                showDialog = false
+                launchCamera(imagePickerLauncher)
+            },
+            onGalleryClick = {
+                showDialog = false
+                launchGallery(imagePickerLauncher)
+            }
+        )
+    }
+}
+
+private fun launchCamera(launcher: ActivityResultLauncher<Intent>) {
+    val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+        type = "image/*"
+        putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/jpeg", "image/png"))
+    }
+    launcher.launch(intent)
+}
+
+private fun launchGallery(launcher: ActivityResultLauncher<Intent>) {
+    val intent = Intent(Intent.ACTION_PICK).apply {
+        type = "image/*"
+    }
+    launcher.launch(intent)
 }
 
 @Composable

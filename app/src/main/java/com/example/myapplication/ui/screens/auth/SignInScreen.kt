@@ -1,17 +1,11 @@
 package com.example.myapplication.ui.screens.auth
 
-import android.content.Intent
-import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -20,40 +14,36 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.myapplication.R
+import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.ui.theme.poppins
 import com.facebook.CallbackManager
 import com.facebook.FacebookCallback
 import com.facebook.FacebookException
 import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
-import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
-import com.google.android.gms.auth.api.identity.SignInClient
 
 private const val TAG = "SignInScreen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignInScreen(
-    onNavigateToRegister: () -> Unit,
-    onNavigateToForgotPassword: () -> Unit,
-    onSignInSuccess: () -> Unit,
+    onNavigateToRegister: () -> Unit = {},
+    onNavigateToForgotPassword: () -> Unit = {},
+    onSignInSuccess: () -> Unit = {},
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -61,6 +51,7 @@ fun SignInScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     // Facebook login launcher
     val facebookLauncher = rememberLauncherForActivityResult(
@@ -79,6 +70,26 @@ fun SignInScreen(
         }
     }
 
+    // Facebook login callback
+    val callbackManager = remember { CallbackManager.Factory.create() }
+    
+    LaunchedEffect(Unit) {
+        LoginManager.getInstance().registerCallback(callbackManager,
+            object : FacebookCallback<LoginResult> {
+                override fun onSuccess(result: LoginResult) {
+                    viewModel.handleFacebookLoginSuccess(result)
+                }
+
+                override fun onCancel() {
+                    viewModel.handleFacebookLoginCancel()
+                }
+
+                override fun onError(error: FacebookException) {
+                    viewModel.handleFacebookLoginError(error)
+                }
+            })
+    }
+
     LaunchedEffect(uiState) {
         when (uiState) {
             is AuthUiState.Success -> onSignInSuccess()
@@ -93,10 +104,7 @@ fun SignInScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = stringResource(R.string.sign_in),
-            style = MaterialTheme.typography.headlineMedium
-        )
+        TopDecoration()
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -104,7 +112,8 @@ fun SignInScreen(
             value = email,
             onValueChange = { email = it },
             label = { Text(stringResource(R.string.email)) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Email)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -113,8 +122,17 @@ fun SignInScreen(
             value = password,
             onValueChange = { password = it },
             label = { Text(stringResource(R.string.password)) },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                        contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -150,7 +168,7 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Text(stringResource(R.string.or_continue_with))
+        Text("Or continue with")
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -161,7 +179,12 @@ fun SignInScreen(
             SocialButton(
                 icon = R.drawable.facebook,
                 text = stringResource(R.string.facebook),
-                onClick = { viewModel.loginWithFacebook(facebookLauncher) }
+                onClick = { 
+                    LoginManager.getInstance().logInWithReadPermissions(
+                        context as android.app.Activity,
+                        listOf("email", "public_profile")
+                    )
+                }
             )
 
             SocialButton(
@@ -185,13 +208,20 @@ fun SignInScreen(
     }
 
     if (uiState is AuthUiState.Loading) {
-        CircularProgressIndicator()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f)),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
     }
 
     if (uiState is AuthUiState.Error) {
         val error = (uiState as AuthUiState.Error).message
         LaunchedEffect(error) {
-            // Show error message using Snackbar or Toast
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
         }
     }
 }
@@ -226,7 +256,7 @@ fun TopDecoration() {
     ) {
         // Big star (main sparkle), as background
         Image(
-            painter = painterResource(id = com.example.myapplication.R.drawable.bigstar),
+            painter = painterResource(id = R.drawable.bigstar),
             contentDescription = "Big Star",
             modifier = Modifier
                 .size(width = 320.dp, height = 210.dp)
@@ -234,7 +264,7 @@ fun TopDecoration() {
         )
         // Small star, top left, closer to big star
         Image(
-            painter = painterResource(id = com.example.myapplication.R.drawable.smallstar),
+            painter = painterResource(id = R.drawable.smallstar),
             contentDescription = "Small Star",
             modifier = Modifier
                 .size(22.dp)
@@ -243,7 +273,7 @@ fun TopDecoration() {
         )
         // Medium star, top right
         Image(
-            painter = painterResource(id = com.example.myapplication.R.drawable.meduimstat),
+            painter = painterResource(id = R.drawable.meduimstat),
             contentDescription = "Medium Star",
             modifier = Modifier
                 .size(38.dp)
@@ -282,5 +312,7 @@ fun TopDecoration() {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun SignInScreenPreview() {
-    SignInScreen()
+    MyApplicationTheme {
+        SignInScreen()
+    }
 } 

@@ -35,19 +35,31 @@ import com.example.myapplication.R
 import com.example.myapplication.navigation.Screen
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.ui.theme.poppins
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     navController: NavController,
     viewModel: ProfileViewModel = hiltViewModel(),
-    onHomeClick: () -> Unit = { navController.navigate("Home") },
-    onBookingsClick: () -> Unit = { navController.navigate("MyBooking") },
-    onFavoriteClick: () -> Unit = { navController.navigate("Favorite") },
+    onHomeClick: () -> Unit = { navController.navigate(Screen.Home.name) },
+    onBookingsClick: () -> Unit = { navController.navigate(Screen.MyBooking.name) },
+    onFavoriteClick: () -> Unit = { navController.navigate(Screen.Favorite.name) },
     onBackClick: () -> Unit = { navController.popBackStack() }
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val view = LocalView.current
+
+    // Configure window insets
+    DisposableEffect(view) {
+        val window = (view.context as android.app.Activity).window
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        onDispose {}
+    }
 
     // Image picker launcher
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -183,7 +195,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Name",
+                text = viewModel.name,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(vertical = 8.dp),
@@ -229,7 +241,7 @@ fun ProfileScreen(
                             contentDescription = "Email"
                         )
                     },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email
                     ),
                     modifier = Modifier.fillMaxWidth(),
@@ -249,7 +261,7 @@ fun ProfileScreen(
                             contentDescription = "Phone"
                         )
                     },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Phone
                     ),
                     modifier = Modifier.fillMaxWidth(),

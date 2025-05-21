@@ -40,8 +40,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun login(email: String, password: String): Result<User> = withContext(Dispatchers.IO) {
         try {
-            val request = ApiService.LoginRequest(email, password)
-            val response = apiService.login(email, request.toString())
+            val response = apiService.login(email, password)
             
             // Save the auth token
             preferenceManager.authToken = response.token
@@ -58,8 +57,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun register(name: String, email: String, password: String, phone: String): Result<User> = withContext(Dispatchers.IO) {
         try {
-            val request = ApiService.RegisterRequest(name, email, password, phone)
-            val response = apiService.register(name, email, password, request.toString())
+            val response = apiService.register(name, email, password, phone)
             
             // Save the auth token
             preferenceManager.authToken = response.token
@@ -132,8 +130,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun requestPasswordReset(email: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val request = ApiService.PasswordResetRequest(email)
-            apiService.requestPasswordReset(request)
+            apiService.requestPasswordReset(email)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -142,8 +139,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun verifyPasswordReset(email: String, code: String, newPassword: String): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val request = ApiService.PasswordResetVerifyRequest(email, code, newPassword)
-            val response = apiService.verifyPasswordReset(request)
+            val response = apiService.verifyPasswordReset(email, code, newPassword)
             Result.success(response.message)
         } catch (e: Exception) {
             Result.failure(e)
@@ -156,8 +152,7 @@ class AuthRepositoryImpl @Inject constructor(
                 IllegalStateException("User not authenticated")
             )
             
-            val request = ApiService.ChangePasswordRequest(currentPassword, newPassword)
-            apiService.changePassword(request, "Bearer $token")
+            apiService.changePassword(currentPassword, newPassword, "Bearer $token")
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

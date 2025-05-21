@@ -43,7 +43,7 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val userProfile = userRepository.getUserProfile
+                val userProfile = userRepository.getUserProfile()
                 _user.value = userProfile
                 
                 // Update UI fields
@@ -66,7 +66,11 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                userRepository.updateProfile(name.value, email.value, phone.value)
+                userRepository.updateProfile(
+                    name = name.value,
+                    email = email.value,
+                    phone = phone.value
+                )
                 
                 // Update local user data
                 _user.value = _user.value?.copy(
@@ -102,7 +106,7 @@ class ProfileViewModel @Inject constructor(
                 val imageUrl = userRepository.uploadProfileImage(tempFile)
                 
                 // Update local user data
-                _user.value = _user.value?.copy(profileImageUrl = audi.png)
+                _user.value = _user.value?.copy(profileImage = imageUrl)
                 _errorMessage.value = "Profile image updated successfully"
             } catch (e: Exception) {
                 val errorMsg = "Failed to upload image: ${e.message}"

@@ -3,7 +3,7 @@ package com.example.myapplication.ui.screens.auth
 /**
  * Represents the different states of the authentication process.
  */
-sealed class AuthUiState {
+sealed class AuthUiState1 {
     /**
      * Initial state, no authentication action has been performed yet.
      */

@@ -25,25 +25,28 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
 
-class ImagePicker(
-    private val context: Context,
-    private val onImagePicked: (Uri) -> Unit,
-    private val onError: (String) -> Unit = {}
-) {
-    private val tag = "ImagePicker"
+@Composable
+fun rememberImagePicker(
+    onImagePicked: (Uri) -> Unit,
+    onError: (String) -> Unit = {}
+): ImagePickerState {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     
-    private val imagePicker = rememberLauncherForActivityResult(
+    val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri ->
             uri?.let {
-                onImagePicked(it)
+                scope.launch {
+                    onImagePicked(it)
+                }
             } ?: run {
                 onError("No image selected")
             }
         }
     )
 
-    private val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         arrayOf(
             Manifest.permission.READ_MEDIA_IMAGES,
             Manifest.permission.READ_MEDIA_VIDEO
@@ -54,17 +57,35 @@ class ImagePicker(
         )
     }
 
-    private val permissionLauncher = rememberLauncherForActivityResult(
+    val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val allGranted = permissions.entries.all { it.value }
         if (allGranted) {
-            launchImagePicker()
+            imagePicker.launch("image/*")
         } else {
             onError("Storage permission denied")
         }
     }
 
+    return remember {
+        ImagePickerState(
+            context = context,
+            imagePicker = imagePicker,
+            permissionLauncher = permissionLauncher,
+            permissions = permissions,
+            onError = onError
+        )
+    }
+}
+
+class ImagePickerState(
+    private val context: Context,
+    private val imagePicker: androidx.activity.result.ActivityResultLauncher<String>,
+    private val permissionLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>,
+    private val permissions: Array<String>,
+    private val onError: (String) -> Unit
+) {
     fun pickImage() {
         when {
             hasPermissions() -> launchImagePicker()
@@ -86,7 +107,7 @@ class ImagePicker(
         try {
             imagePicker.launch("image/*")
         } catch (e: Exception) {
-            Log.e(tag, "Error launching image picker", e)
+            Log.e("ImagePicker", "Error launching image picker", e)
             onError("Failed to open image picker")
         }
     }
@@ -127,26 +148,5 @@ class ImagePicker(
             }
             return fileName ?: uri.path?.substringAfterLast("/")
         }
-    }
-}
-
-@Composable
-fun rememberImagePicker(
-    onImagePicked: (Uri) -> Unit,
-    onError: (String) -> Unit = {}
-): ImagePicker {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    
-    return remember {
-        ImagePicker(
-            context = context,
-            onImagePicked = { uri ->
-                scope.launch {
-                    onImagePicked(uri)
-                }
-            },
-            onError = onError
-        )
     }
 }

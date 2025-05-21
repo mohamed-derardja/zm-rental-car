@@ -5,7 +5,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -30,10 +30,10 @@ fun Context.showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {
  */
 fun String.toFormattedDate(inputFormat: String, outputFormat: String): String {
     return try {
-        val inputFormat = SimpleDateFormat(inputFormat, Locale.getDefault())
-        val outputFormat = SimpleDateFormat(outputFormat, Locale.getDefault())
-        val date = inputFormat.parse(this) ?: return this
-        outputFormat.format(date)
+        val inputFormatter = SimpleDateFormat(inputFormat, Locale.getDefault())
+        val outputFormatter = SimpleDateFormat(outputFormat, Locale.getDefault())
+        val date = inputFormatter.parse(this) ?: return this
+        outputFormatter.format(date)
     } catch (e: Exception) {
         this
     }
@@ -54,9 +54,12 @@ fun Number.toCurrencyFormat(currencyCode: String = "USD"): String {
 fun Uri.getFileName(context: Context): String {
     var result = ""
     context.contentResolver.query(this, null, null, null, null)?.use { cursor ->
-        cursor.moveToFirst()
-        val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-        result = cursor.getString(nameIndex)
+        if (cursor.moveToFirst()) {
+            val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            if (nameIndex != -1) {
+                result = cursor.getString(nameIndex)
+            }
+        }
     }
     return result.ifEmpty { "file_${System.currentTimeMillis()}" }
 }
@@ -79,7 +82,7 @@ fun <T> Flow<T>.collectAsState(
             }
         } catch (e: Exception) {
             onError?.invoke(e)
-            context.showToast(context.getString(R.string.error_occurred))
+            context.showToast("An error occurred")
         }
     }
     
@@ -139,7 +142,11 @@ fun <T> Flow<T>.observe(
     
     when (val currentState = state.value) {
         null -> onLoading()
-        is Result.Failure -> onError(currentState.exception)
-        is Result.Success -> onSuccess(currentState.value as T)
+        else -> {
+            currentState.fold(
+                onSuccess = { value -> onSuccess(value) },
+                onFailure = { error -> onError(error) }
+            )
+        }
     }
 }

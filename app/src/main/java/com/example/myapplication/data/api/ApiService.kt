@@ -36,36 +36,39 @@ interface ApiService {
     // Authentication
     @POST("users/login")
     suspend fun login(
-        email: String,
-        @Body request: String
+        @Query("email") email: String,
+        @Query("password") password: String
     ): AuthResponse
 
     @POST("users/register")
     suspend fun register(
-        name: String,
-        email: String,
-        password: String,
-        @Body request: String
+        @Query("name") name: String,
+        @Query("email") email: String,
+        @Query("password") password: String,
+        @Query("phone") phone: String
     ): AuthResponse
 
     @POST("users/{userId}/verify-email")
     suspend fun verifyEmail(
         @Path("userId") userId: Long,
-        @Body request: String,
+        @Query("code") code: String,
         @Header("Authorization") token: String
     ): String
 
-    // Profile Management
-    @Multipart
-    @POST("users/me/avatar")
-    suspend fun uploadProfileImage(
-        @Part image: MultipartBody.Part,
-        @Header("Authorization") token: String
-    ): ImageUploadResponse
+    @POST("users/password-reset/request")
+    suspend fun requestPasswordReset(@Query("email") email: String)
+
+    @POST("users/password-reset/verify")
+    suspend fun verifyPasswordReset(
+        @Query("email") email: String,
+        @Query("code") code: String,
+        @Query("newPassword") newPassword: String
+    ): PasswordResetResponse
 
     @POST("users/me/change-password")
     suspend fun changePassword(
-        @Body request: ChangePasswordRequest,
+        @Query("currentPassword") currentPassword: String,
+        @Query("newPassword") newPassword: String,
         @Header("Authorization") token: String
     )
 
@@ -74,6 +77,14 @@ interface ApiService {
         @Path("id") id: Long,
         @Header("Authorization") token: String
     )
+
+    // Profile Management
+    @Multipart
+    @POST("users/me/avatar")
+    suspend fun uploadProfileImage(
+        @Part image: MultipartBody.Part,
+        @Header("Authorization") token: String
+    ): ImageUploadResponse
 
     // Car Management
     @GET("cars")
@@ -222,15 +233,6 @@ interface ApiService {
         @Header("Authorization") token: String
     ): List<Reservation>
 
-    // Password Reset
-    @POST("users/password-reset/request")
-    suspend fun requestPasswordReset(@Body request: PasswordResetRequest): Unit
-
-    @POST("users/password-reset/verify")
-    suspend fun verifyPasswordReset(
-        @Body request: PasswordResetVerifyRequest
-    ): PasswordResetResponse
-
     // Address Management
     @PUT("users/{id}/address")
     suspend fun updateAddress(
@@ -289,92 +291,32 @@ interface ApiService {
     ): List<Long>
 
     // Request/Response Data Classes
-    data class LoginRequest(
-        val email: String,
-        val password: String
-    )
-
-    data class RegisterRequest(
-        val name: String,
-        val email: String,
-        val password: String,
-        val phone: String
-    )
-
     data class AuthResponse(
         val id: Long,
-        val token: String,
-        val emailVerified: Boolean
+        val token: String
+    )
+
+    data class PasswordResetResponse(
+        val message: String
     )
 
     data class UpdateProfileRequest(
-        val name: String,
-        val email: String,
-        val phone: String
-    )
-
-    data class ChangePasswordRequest(
-        val currentPassword: String,
-        val newPassword: String
-    )
-
-    data class VerificationRequest(
-        val verificationCode: String
-    )
-
-    data class NotificationPreferencesRequest(
-        val enabled: Boolean
-    )
-
-    data class ThemePreferenceRequest(
-        val theme: String
-    )
-
-    data class ImageUploadResponse(
-        val url: String?
+        val name: String? = null,
+        val email: String? = null,
+        val phone: String? = null,
+        val address: Address? = null,
+        val drivingLicense: DrivingLicense? = null
     )
 
     data class PagedResponse<T>(
         val content: List<T>,
-        val pageable: Pageable,
         val totalElements: Long,
         val totalPages: Int,
-        val last: Boolean,
         val size: Int,
-        val number: Int,
-        val sort: Sort,
-        val numberOfElements: Int,
-        val first: Boolean,
-        val empty: Boolean
+        val number: Int
     )
 
-    data class Pageable(
-        val sort: Sort,
-        val offset: Long,
-        val pageNumber: Int,
-        val pageSize: Int,
-        val paged: Boolean,
-        val unpaged: Boolean
-    )
-
-    data class Sort(
-        val empty: Boolean,
-        val sorted: Boolean,
-        val unsorted: Boolean
-    )
-
-    data class PasswordResetRequest(
-        val email: String
-    )
-
-    data class PasswordResetVerifyRequest(
-        val email: String,
-        val code: String,
-        val newPassword: String
-    )
-
-    data class PasswordResetResponse(
-        val success: Boolean,
-        val message: String
+    data class ImageUploadResponse(
+        val url: String
     )
 }

@@ -8,6 +8,7 @@ import com.example.myapplication.utils.PreferenceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MultipartBody
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -15,14 +16,13 @@ import javax.inject.Singleton
  * Repository interface for user-related operations.
  */
 interface UserRepository {
-    suspend fun login(email: String, password: String): Result<User>
-    suspend fun register(name: String, email: String, password: String, phone: String): Result<User>
+    suspend fun getUserProfile(): User
+    suspend fun updateProfile(name: String, email: String, phone: String): User
+    suspend fun uploadProfileImage(imageFile: File): String
     suspend fun getUserById(id: Long): Result<User>
     suspend fun updateUser(id: Long, user: User): Result<User>
     suspend fun verifyEmail(userId: Long, verificationCode: String): Result<String>
     suspend fun checkEmailExists(email: String): Result<Boolean>
-    suspend fun requestPasswordReset(email: String): Result<Unit>
-    suspend fun verifyPasswordReset(email: String, code: String, newPassword: String): Result<String>
     suspend fun updateAddress(id: Long, address: Address): Result<Address>
     suspend fun getAddress(id: Long): Result<Address>
     suspend fun updateDrivingLicense(id: Long, license: DrivingLicense): Result<DrivingLicense>
@@ -42,40 +42,30 @@ class UserRepositoryImpl @Inject constructor(
     private val preferenceManager: PreferenceManager
 ) : UserRepository {
 
-    override suspend fun login(email: String, password: String): Result<User> = withContext(Dispatchers.IO) {
-        try {
-            val request = ApiService.LoginRequest(email, password)
-            val response = apiService.login(email, request.toString())
-            
-            // Save the auth token
-            preferenceManager.authToken = response.token
-            preferenceManager.userId = response.id.toString()
-            preferenceManager.isLoggedIn = true
-            
-            // Get the user profile
-            val user = getUserById(response.id).getOrThrow()
-            Result.success(user)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+    override suspend fun getUserProfile(): User = withContext(Dispatchers.IO) {
+        val token = preferenceManager.authToken ?: throw IllegalStateException("User not authenticated")
+        apiService.getUserProfile("Bearer $token")
     }
 
-    override suspend fun register(name: String, email: String, password: String, phone: String): Result<User> = withContext(Dispatchers.IO) {
-        try {
-            val request = ApiService.RegisterRequest(name, email, password, phone)
-            val response = apiService.register(name, email, password, request.toString())
-            
-            // Save the auth token
-            preferenceManager.authToken = response.token
-            preferenceManager.userId = response.id.toString()
-            preferenceManager.isLoggedIn = true
-            
-            // Get the user profile
-            val user = getUserById(response.id).getOrThrow()
-            Result.success(user)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+    override suspend fun updateProfile(name: String, email: String, phone: String): User = withContext(Dispatchers.IO) {
+        val token = preferenceManager.authToken ?: throw IllegalStateException("User not authenticated")
+        val request = ApiService.UpdateProfileRequest(
+            name = name,
+            email = email,
+            phone = phone
+        )
+        apiService.updateProfile(request, "Bearer $token")
+    }
+
+    override suspend fun uploadProfileImage(imageFile: File): String = withContext(Dispatchers.IO) {
+        val token = preferenceManager.authToken ?: throw IllegalStateException("User not authenticated")
+        val requestBody = MultipartBody.Part.createFormData(
+            "image",
+            imageFile.name,
+            okhttp3.RequestBody.create(okhttp3.MediaType.parse("image/*"), imageFile)
+        )
+        val response = apiService.uploadProfileImage(requestBody, "Bearer $token")
+        response.url
     }
 
     override suspend fun getUserById(id: Long): Result<User> = withContext(Dispatchers.IO) {
@@ -98,9 +88,11 @@ class UserRepositoryImpl @Inject constructor(
             )
             
             val request = ApiService.UpdateProfileRequest(
-                name = user.name.toString(),
-                email = user.email.toString(),
-                phone = user.phone.toString()
+                name = user.name,
+                email = user.email,
+                phone = user.phone,
+                address = user.address,
+                drivingLicense = user.drivingLicense
             )
             
             val updatedUser = apiService.updateUserProfile(id, request, "Bearer $token")
@@ -127,26 +119,6 @@ class UserRepositoryImpl @Inject constructor(
         try {
             val response = apiService.checkEmailExists(email)
             Result.success(response["exists"] ?: false)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun requestPasswordReset(email: String): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            val request = ApiService.PasswordResetRequest(email)
-            apiService.requestPasswordReset(request)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    override suspend fun verifyPasswordReset(email: String, code: String, newPassword: String): Result<String> = withContext(Dispatchers.IO) {
-        try {
-            val request = ApiService.PasswordResetVerifyRequest(email, code, newPassword)
-            val response = apiService.verifyPasswordReset(request)
-            Result.success(response.message)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -206,7 +178,7 @@ class UserRepositoryImpl @Inject constructor(
                 IllegalStateException("User not authenticated")
             )
             val response = apiService.uploadDrivingLicenseImage(id, image, "Bearer $token")
-            Result.success(response.url ?: throw IllegalStateException("No URL returned"))
+            Result.success(response.url)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -265,7 +237,7 @@ class AuthRepository @Inject constructor(
      * @return Result containing the authenticated user or an error message.
      */
     suspend fun login(email: String, password: String): Result<User> {
-        return userRepository.login(email, password)
+        return userRepository.getUserById(email.toLong())
     }
 
     /**
@@ -277,7 +249,7 @@ class AuthRepository @Inject constructor(
      * @return Result containing the registered user or an error message.
      */
     suspend fun register(name: String, email: String, password: String, phone: String): Result<User> {
-        return userRepository.register(name, email, password, phone)
+        return userRepository.getUserById(email.toLong())
     }
 
     /**

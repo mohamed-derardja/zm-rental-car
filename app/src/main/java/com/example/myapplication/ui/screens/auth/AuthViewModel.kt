@@ -3,15 +3,17 @@ package com.example.myapplication.ui.screens.auth
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.auth.FacebookAuthHelper
 import com.example.myapplication.data.auth.GoogleAuthHelper
-import com.example.myapplication.data.model.User
 import com.example.myapplication.data.repository.AuthRepository
-import com.example.myapplication.utils.Resource
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.tasks.Task
+import com.google.android.gms.auth.api.identity.SignInCredential
+import com.facebook.FacebookException
+import com.facebook.login.LoginResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +22,16 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val TAG = "AuthViewModel"
+
+/**
+ * Sealed class representing the different states of the authentication UI
+ */
+sealed class AuthUiState {
+    object Idle : AuthUiState()
+    object Loading : AuthUiState()
+    data class Success(val token: String) : AuthUiState()
+    data class Error(val message: String) : AuthUiState()
+}
 
 /**
  * ViewModel that handles authentication logic and UI state.
@@ -41,27 +53,32 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun initializeAuthHelpers() {
-        facebookAuthHelper = FacebookAuthHelper(
-            context = context,
-            onSuccess = { token ->
-                handleFacebookToken(token)
-            },
-            onError = { error ->
-                _uiState.value = AuthUiState.Error(error)
-                Log.e(TAG, "Facebook authentication error: $error")
-            }
-        )
+        try {
+            facebookAuthHelper = FacebookAuthHelper(
+                context = context,
+                onSuccess = { token ->
+                    handleFacebookToken(token)
+                },
+                onError = { error ->
+                    _uiState.value = AuthUiState.Error(error)
+                    Log.e(TAG, "Facebook authentication error: $error")
+                }
+            )
 
-        googleAuthHelper = GoogleAuthHelper(
-            context = context,
-            onSuccess = { token ->
-                handleGoogleToken(token)
-            },
-            onError = { error ->
-                _uiState.value = AuthUiState.Error(error)
-                Log.e(TAG, "Google authentication error: $error")
-            }
-        )
+            googleAuthHelper = GoogleAuthHelper(
+                context = context,
+                onSuccess = { token ->
+                    handleGoogleToken(token)
+                },
+                onError = { error ->
+                    _uiState.value = AuthUiState.Error(error)
+                    Log.e(TAG, "Google authentication error: $error")
+                }
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error initializing auth helpers", e)
+            _uiState.value = AuthUiState.Error("Failed to initialize authentication")
+        }
     }
 
     /**
@@ -99,20 +116,30 @@ class AuthViewModel @Inject constructor(
             _uiState.value = AuthUiState.Error("Facebook authentication not initialized")
             return
         }
-        _uiState.value = AuthUiState.Loading
-        facebookAuthHelper?.login(launcher)
+        try {
+            _uiState.value = AuthUiState.Loading
+            facebookAuthHelper?.login(launcher)
+        } catch (e: Exception) {
+            _uiState.value = AuthUiState.Error("Failed to start Facebook login")
+            Log.e(TAG, "Error starting Facebook login", e)
+        }
     }
 
     /**
      * Handle Google login button click.
      */
-    fun loginWithGoogle(launcher: androidx.activity.result.ActivityResultLauncher<Intent>) {
+    fun loginWithGoogle(launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>) {
         if (googleAuthHelper == null) {
             _uiState.value = AuthUiState.Error("Google authentication not initialized")
             return
         }
-        _uiState.value = AuthUiState.Loading
-        googleAuthHelper?.signIn(launcher)
+        try {
+            _uiState.value = AuthUiState.Loading
+            googleAuthHelper?.signIn(launcher)
+        } catch (e: Exception) {
+            _uiState.value = AuthUiState.Error("Failed to start Google login")
+            Log.e(TAG, "Error starting Google login", e)
+        }
     }
 
     /**
@@ -123,18 +150,28 @@ class AuthViewModel @Inject constructor(
             _uiState.value = AuthUiState.Error("Facebook authentication not initialized")
             return
         }
-        facebookAuthHelper?.getCallbackManager()?.onActivityResult(requestCode, requestCode, data)
+        try {
+            facebookAuthHelper?.getCallbackManager()?.onActivityResult(requestCode, requestCode, data)
+        } catch (e: Exception) {
+            _uiState.value = AuthUiState.Error("Failed to process Facebook login result")
+            Log.e(TAG, "Error handling Facebook activity result", e)
+        }
     }
 
     /**
      * Handle Google login result from activity.
      */
-    fun handleGoogleActivityResult(task: Task<GoogleSignInAccount>) {
+    fun handleGoogleActivityResult(task: SignInCredential) {
         if (googleAuthHelper == null) {
             _uiState.value = AuthUiState.Error("Google authentication not initialized")
             return
         }
-        googleAuthHelper?.handleSignInResult(task)
+        try {
+            googleAuthHelper?.handleSignInResult(task)
+        } catch (e: Exception) {
+            _uiState.value = AuthUiState.Error("Failed to process Google login result")
+            Log.e(TAG, "Error handling Google activity result", e)
+        }
     }
 
     /**
@@ -224,7 +261,53 @@ class AuthViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        facebookAuthHelper = null
-        googleAuthHelper = null
+        try {
+            facebookAuthHelper?.logout()
+            googleAuthHelper?.signOut()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during cleanup", e)
+        } finally {
+            facebookAuthHelper = null
+            googleAuthHelper = null
+        }
+    }
+
+    /**
+     * Handle Facebook login success.
+     */
+    fun handleFacebookLoginSuccess(result: LoginResult) {
+        viewModelScope.launch {
+            try {
+                _uiState.value = AuthUiState.Loading
+                val token = result.accessToken.token
+                val result = authRepository.loginWithFacebook(token)
+                result.onSuccess { user ->
+                    _uiState.value = AuthUiState.Success("fb_$token")
+                    Log.d(TAG, "User logged in successfully: ${user.name}")
+                }.onFailure { exception ->
+                    _uiState.value = AuthUiState.Error(exception.message ?: "Authentication failed")
+                    Log.e(TAG, "Login failed", exception)
+                }
+            } catch (e: Exception) {
+                _uiState.value = AuthUiState.Error(e.message ?: "An unknown error occurred")
+                Log.e(TAG, "Error during Facebook authentication", e)
+            }
+        }
+    }
+
+    /**
+     * Handle Facebook login cancellation.
+     */
+    fun handleFacebookLoginCancel() {
+        _uiState.value = AuthUiState.Error("Facebook login cancelled")
+        Log.d(TAG, "Facebook login cancelled by user")
+    }
+
+    /**
+     * Handle Facebook login error.
+     */
+    fun handleFacebookLoginError(error: FacebookException) {
+        _uiState.value = AuthUiState.Error(error.message ?: "Facebook login failed")
+        Log.e(TAG, "Facebook login error", error)
     }
 }

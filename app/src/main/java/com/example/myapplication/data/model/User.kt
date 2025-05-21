@@ -9,7 +9,8 @@ data class User(
     val address: Address? = null,
     val drivingLicense: DrivingLicense? = null,
     val favorites: List<Long> = emptyList(),
-    val isEmailVerified: Boolean = false
+    val isEmailVerified: Boolean = false,
+    val profileImageUrl: String
 )
 
 data class Address(

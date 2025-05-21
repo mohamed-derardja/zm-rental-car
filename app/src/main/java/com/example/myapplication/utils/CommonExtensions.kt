@@ -5,8 +5,8 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.view.View
 import android.widget.Toast
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+// View-based extensions
 /**
  * Extension function to show a toast message
  */
@@ -47,18 +48,6 @@ fun View.showSnackbarWithAction(
 }
 
 /**
- * Extension function to check if the device has internet connection
- */
-fun Context.isNetworkAvailable(): Boolean {
-    val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return false
-    val network = connectivityManager.activeNetwork ?: return false
-    val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-
-    return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-}
-
-/**
  * Extension function to show a toast message in a Fragment
  */
 fun Fragment.showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {
@@ -84,86 +73,7 @@ fun Fragment.showSnackbarWithAction(
     requireView().showSnackbarWithAction(message, actionText, duration, action)
 }
 
-/**
- * Extension function to check if the device has internet connection in a Fragment
- */
-fun Fragment.isNetworkAvailable(): Boolean {
-    return requireContext().isNetworkAvailable()
-}
-
-/**
- * Extension function to format a price with currency symbol
- */
-fun Double.formatPrice(currencySymbol: String = "$"): String {
-    return "$currencySymbol${String.format(Locale.US, "%.2f", this)}"
-}
-
-/**
- * Extension function to format a date string
- */
-fun String.formatDate(inputFormat: String = "yyyy-MM-dd", outputFormat: String = "MMM dd, yyyy"): String {
-    return try {
-        val inputFormatter = SimpleDateFormat(inputFormat, Locale.getDefault())
-        val outputFormatter = SimpleDateFormat(outputFormat, Locale.getDefault())
-        val date = inputFormatter.parse(this)
-        date?.let { outputFormatter.format(it) } ?: this
-    } catch (e: Exception) {
-        this
-    }
-}
-
-/**
- * Extension function to format a phone number
- */
-fun String.formatPhoneNumber(): String {
-    return if (length == 10 && all { it.isDigit() }) {
-        "(${substring(0, 3)}) ${substring(3, 6)}-${substring(6)}"
-    } else {
-        this
-    }
-}
-
-/**
- * Extension function to validate an email address
- */
-fun String.isValidEmail(): Boolean {
-    return android.util.Patterns.EMAIL_ADDRESS.matcher(this).matches()
-}
-
-/**
- * Extension function to validate a password
- */
-fun String.isValidPassword(): Boolean {
-    return length >= 8 && any { it.isDigit() } && any { it.isUpperCase() } && any { it.isLowerCase() }
-}
-
-/**
- * Extension function to validate a phone number
- */
-fun String.isValidPhoneNumber(): Boolean {
-    return length == 10 && all { it.isDigit() }
-}
-
-/**
- * Extension function to capitalize the first letter of each word
- */
-fun String.capitalizeWords(): String {
-    return split(" ").joinToString(" ") { word ->
-        word.lowercase().replaceFirstChar { it.uppercase() }
-    }
-}
-
-/**
- * Extension function to truncate text with ellipsis
- */
-fun String.truncate(maxLength: Int): String {
-    return if (length > maxLength) {
-        "${substring(0, maxLength)}..."
-    } else {
-        this
-    }
-}
-
+// Compose-based extensions
 /**
  * Extension function to show a snackbar with a message
  */
@@ -200,7 +110,8 @@ fun SnackbarHostState.showSnackbarWithAction(
     scope.launch {
         val result = showSnackbar(
             message = message,
-            actionLabel = actionLabel
+            actionLabel = actionLabel,
+            duration = SnackbarDuration.Long
         )
         if (result == SnackbarResult.ActionPerformed) {
             onAction()
@@ -293,5 +204,98 @@ fun ShowSuccessSnackbar(
             SnackbarResult.ActionPerformed -> onAction?.invoke()
             SnackbarResult.Dismissed -> { /* Handle dismissal if needed */ }
         }
+    }
+}
+
+// Common utility extensions
+/**
+ * Extension function to check if the device has internet connection
+ */
+fun Context.isNetworkAvailable(): Boolean {
+    val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return false
+    val network = connectivityManager.activeNetwork ?: return false
+    val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+
+    return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+}
+
+/**
+ * Extension function to check if the device has internet connection in a Fragment
+ */
+fun Fragment.isNetworkAvailable(): Boolean {
+    return requireContext().isNetworkAvailable()
+}
+
+/**
+ * Extension function to format a price with currency symbol
+ */
+fun Double.formatPrice(currencySymbol: String = "$"): String {
+    return "$currencySymbol${String.format(Locale.US, "%.2f", this)}"
+}
+
+/**
+ * Extension function to format a date string
+ */
+fun String.formatDate(inputFormat: String = "yyyy-MM-dd", outputFormat: String = "MMM dd, yyyy"): String {
+    return try {
+        val inputFormatter = SimpleDateFormat(inputFormat, Locale.getDefault())
+        val outputFormatter = SimpleDateFormat(outputFormat, Locale.getDefault())
+        val date = inputFormatter.parse(this)
+        date?.let { outputFormatter.format(it) } ?: this
+    } catch (e: Exception) {
+        this
+    }
+}
+
+/**
+ * Extension function to format a phone number
+ */
+fun String.formatPhoneNumber(): String {
+    return if (length == 10 && all { it.isDigit() }) {
+        "(${substring(0, 3)}) ${substring(3, 6)}-${substring(6)}"
+    } else {
+        this
+    }
+}
+
+/**
+ * Extension function to validate an email address
+ */
+fun String.isValidEmail(): Boolean {
+    return android.util.Patterns.EMAIL_ADDRESS.matcher(this).matches()
+}
+
+/**
+ * Extension function to validate a password
+ */
+fun String.isValidPassword(): Boolean {
+    return length >= 8 && any { it.isDigit() } && any { it.isUpperCase() } && any { it.isLowerCase() }
+}
+
+/**
+ * Extension function to validate a phone number
+ */
+fun String.isValidPhoneNumber(): Boolean {
+    return length == 10 && all { it.isDigit() }
+}
+
+/**
+ * Extension function to capitalize the first letter of each word
+ */
+fun String.capitalizeWords(): String {
+    return split(" ").joinToString(" ") { word ->
+        word.lowercase().replaceFirstChar { it.uppercase() }
+    }
+}
+
+/**
+ * Extension function to truncate text with ellipsis
+ */
+fun String.truncate(maxLength: Int): String {
+    return if (length > maxLength) {
+        "${substring(0, maxLength)}..."
+    } else {
+        this
     }
 }
