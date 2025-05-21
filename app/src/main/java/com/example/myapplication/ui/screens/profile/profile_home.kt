@@ -1,5 +1,7 @@
 package com.example.myapplication.ui.screens.profile
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,36 +9,86 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.myapplication.R
 import com.example.myapplication.navigation.Screen
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.ui.theme.poppins
+import com.example.myapplication.utils.rememberImagePicker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     navController: NavController,
+    viewModel: ProfileViewModel = hiltViewModel(),
     onHomeClick: () -> Unit = { navController.navigate("Home") },
     onBookingsClick: () -> Unit = { navController.navigate("MyBooking") },
     onFavoriteClick: () -> Unit = { navController.navigate("Favorite") },
     onBackClick: () -> Unit = { navController.popBackStack() }
 ) {
+    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
+    
+    // Initialize the image picker
+    val imagePicker = rememberImagePicker(
+        onImagePicked = { uri ->
+            viewModel.onProfileImageSelected(uri)
+        },
+        onError = { error ->
+            // Handle error, maybe show a snackbar
+            println("Image picker error: $error")
+        }
+    )
+    
+    // Show a dialog when there's an error
+    if (uiState is ProfileUiState.Error) {
+        val errorMessage = (uiState as ProfileUiState.Error).message
+        AlertDialog(
+            onDismissRequest = { /* Dismiss the dialog */ },
+            title = { Text("Error") },
+            text = { Text(errorMessage) },
+            confirmButton = {
+                TextButton(
+                    onClick = { /* Dismiss the dialog */ }
+                ) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+    
+    // Show loading indicator when loading
+    if (uiState is ProfileUiState.Loading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f)),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    }
+    
     // Calculate top padding based on status bar height
     val topPadding = with(LocalDensity.current) {
         WindowInsets.statusBars.getTop(this).toDp()
@@ -92,31 +144,46 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Profile picture
+            // Profile picture with edit button
             Box(
                 contentAlignment = Alignment.BottomEnd,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .clickable { imagePicker.pickImage() }
             ) {
+                // Show selected image or default
+                val painter = if (viewModel.profileImageUri != null) {
+                    rememberAsyncImagePainter(
+                        model = viewModel.profileImageUri,
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    painterResource(id = R.drawable.account)
+                }
+                
                 Image(
-                    painter = painterResource(id = R.drawable.account),
-                    contentDescription = "Profile Image",
+                    painter = painter,
+                    contentDescription = "Profile Picture",
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(140.dp)
+                        .size(120.dp)
                         .clip(CircleShape)
+                        .background(Color.LightGray)
                 )
 
+                // Edit icon
                 Box(
                     modifier = Modifier
-                        .offset(x = (-4).dp, y = (-4).dp)
-                        .size(32.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color.White)
-                        .padding(4.dp)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .padding(8.dp)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.edit_icon),
-                        contentDescription = "Edit",
-                        modifier = Modifier.size(28.dp)
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit Profile Picture",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -136,32 +203,75 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Profile options in a Column with horizontal padding
+            // User Information
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 80.dp) // Add padding for bottom nav bar
+                    .padding(horizontal = 24.dp)
             ) {
-            ProfileOption(
-                icon = R.drawable.profil,
-                label = "Your Profile"
-                ) { navController.navigate(Screen.ProfileGeneral.name) }
+                // Name Field
+                OutlinedTextField(
+                    value = viewModel.name,
+                    onValueChange = { viewModel.onNameChange(it) },
+                    label = { Text("Full Name") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Name"
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
 
-            ProfileOption(
-                icon = R.drawable.setting_line,
-                label = "Settings"
-                ) { navController.navigate(Screen.Settings.name) }
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Email Field
+                OutlinedTextField(
+                    value = viewModel.email,
+                    onValueChange = { viewModel.onEmailChange(it) },
+                    label = { Text("Email") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Email,
+                            contentDescription = "Email"
+                        )
+                    },
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Email,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
 
-            ProfileOption(
-                icon = R.drawable.mdi_question_mark_circle_outline,
-                label = "Help & Support"
-                ) { navController.navigate(Screen.HelpCenter.name) }
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Phone Field
+                OutlinedTextField(
+                    value = viewModel.phone,
+                    onValueChange = { viewModel.onPhoneChange(it) },
+                    label = { Text("Phone") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Phone,
+                            contentDescription = "Phone"
+                        )
+                    },
+                    keyboardType = KeyboardType.Phone,
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+            }
 
-            ProfileOption(
-                icon = R.drawable.ic_outline_lock,
-                label = "Privacy & Policy"
-                ) { navController.navigate(Screen.PrivacyPolicy.name) }
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // Save Button
+            Button(
+                onClick = { viewModel.updateProfile() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
+                Text("Save Changes")
+            }
 
             Divider(modifier = Modifier.padding(vertical = 16.dp))
 
@@ -169,7 +279,7 @@ fun ProfileScreen(
                 icon = R.drawable.log_out_icons,
                 label = "Log Out",
                 showArrow = false
-                ) { navController.navigate(Screen.Logout.name) }
+            ) { navController.navigate(Screen.Logout.name) }
             }
         }
 

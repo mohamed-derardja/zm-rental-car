@@ -29,14 +29,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.myapplication.R
+import com.example.myapplication.data.model.Car
 import com.example.myapplication.ui.theme.poppins
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onCarClick: (String) -> Unit = {},
+    onCarClick: (Long) -> Unit = {},
     onProfileClick: () -> Unit = {},
     onFavoriteClick: () -> Unit = {},
     onSignOut: () -> Unit = {},
@@ -44,10 +45,23 @@ fun HomeScreen(
     onNotificationClick: () -> Unit = {},
     onCatalogClick: () -> Unit = {}
 ) {
+    val viewModel: HomeViewModel = hiltViewModel()
+    val uiState by viewModel.uiState.collectAsState()
+
     val scrollState = rememberScrollState()
     var searchQuery by remember { mutableStateOf("") }
     var expandedBrands by remember { mutableStateOf(false) }
-    var selectedBrand by remember { mutableStateOf("") }
+
+    LaunchedEffect(searchQuery) {
+        viewModel.onSearchQueryChanged(searchQuery)
+    }
+
+    uiState.error?.let { error ->
+        LaunchedEffect(error) {
+            println("Error: $error")
+            viewModel.clearError()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -60,7 +74,6 @@ fun HomeScreen(
                 .padding(top = 8.dp, bottom = 80.dp)
                 .verticalScroll(scrollState)
         ) {
-            // Top Bar with Profile and Notification Icons
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -68,7 +81,6 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Profile Icon - now clickable to navigate to profile
                 Box(
                     modifier = Modifier
                         .clip(shape = RoundedCornerShape(12.dp))
@@ -85,7 +97,6 @@ fun HomeScreen(
                     )
                 }
 
-                // Notification Icon
                 Box(
                     modifier = Modifier
                         .clip(shape = RoundedCornerShape(12.dp))
@@ -105,14 +116,12 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Search Bar with Filter Button
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Search Field
                 TextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
@@ -148,7 +157,6 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.width(35.dp))
 
-                // Filter Button
                 Box(
                     modifier = Modifier
                         .size(55.dp)
@@ -168,7 +176,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Top Brands Section
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -186,25 +193,19 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Brand Logos Row
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 15.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // First brand is always "All"
                 item {
                     CarBrandItem(
                         brandName = "All",
                         iconRes = R.drawable.all,
-                        isSelected = selectedBrand == "All",
-                        onClick = { 
-                            selectedBrand = "All"
-                            expandedBrands = !expandedBrands 
-                        }
+                        isSelected = uiState.selectedBrand == "All",
+                        onClick = { viewModel.onBrandSelected("All") }
                     )
                 }
 
-                // Always visible brands
                 val visibleBrands = listOf(
                     Pair("Tesla", R.drawable.teslatopbrand),
                     Pair("BMW", R.drawable.bmwtopbrand),
@@ -216,12 +217,11 @@ fun HomeScreen(
                     CarBrandItem(
                         brandName = brand,
                         iconRes = icon,
-                        isSelected = selectedBrand == brand,
-                        onClick = { selectedBrand = brand }
+                        isSelected = uiState.selectedBrand == brand,
+                        onClick = { viewModel.onBrandSelected(brand) }
                     )
                 }
 
-                // Expandable brands - only visible if expanded
                 if (expandedBrands) {
                     val extendedBrands = listOf(
                         Pair("Mercedes", R.drawable.mercedestopbrand),
@@ -232,8 +232,8 @@ fun HomeScreen(
                         CarBrandItem(
                             brandName = brand,
                             iconRes = icon,
-                            isSelected = selectedBrand == brand,
-                            onClick = { selectedBrand = brand }
+                            isSelected = uiState.selectedBrand == brand,
+                            onClick = { viewModel.onBrandSelected(brand) }
                         )
                     }
                 }
@@ -241,42 +241,45 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Top Rated Cars
             Text(
-                text = "Top Rated Cars",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.Black,
-                modifier = Modifier.padding(horizontal = 20.dp)
+                text = "Popular Cars",
+                style = TextStyle(
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                ),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Horizontal Car Cards
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(3) { index ->
-                    val images = listOf(
-                        R.drawable.ic_launcher_background,
-                        R.drawable.ic_launcher_background,
-                        R.drawable.ic_launcher_background
-                    )
-
-                    TopRatedCarCard(
-                        carName = "Toyota RAV4 2024",
-                        price = "00.00DA/day",
-                        rating = 4.9f,
-                        imageRes = images[index],
-                        onClick = { onCarClick("Toyota RAV4 2024") }
-                    )
+            if (uiState.popularCars.isEmpty() && !uiState.isLoadingPopular) {
+                Text(
+                    text = "No popular cars available",
+                    style = TextStyle(
+                        fontFamily = poppins,
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .wrapContentWidth(Alignment.CenterHorizontally)
+                )
+            } else {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(uiState.popularCars) { car ->
+                        PopularCarCard(
+                            car = car,
+                            onClick = { onCarClick(car.id ?: 0) }
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Most Popular Car
             Text(
                 text = "Most Popular Car",
                 fontSize = 18.sp,
@@ -287,17 +290,15 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Multiple Most Popular Cars
-            val popularCars = listOf(
-                Triple("Toyota RAV4 2024", "00.00DA/day", R.drawable.ic_launcher_background),
-                Triple("Audi RS e-tron GT", "00.00DA/day", R.drawable.ic_launcher_background),
-                Triple("Mercedes AMG GT", "00.00DA/day", R.drawable.ic_launcher_background),
-                Triple("BMW i7 2024", "00.00DA/day", R.drawable.ic_launcher_background)
-            )
+            val popularCars = uiState.popularCars
 
-            popularCars.forEach { (carName, price, imageRes) ->
+            popularCars.forEach { car ->
                 MostPopularCarCard(
-                    carName = carName,
+                    carName = car.name,
+                    price = car.price,
+                    rating = car.rating,
+                    imageRes = car.imageRes,
+                    onClick = { onCarClick(car.id ?: 0) }
                     price = price,
                     rating = 4.9f,
                     imageRes = imageRes,

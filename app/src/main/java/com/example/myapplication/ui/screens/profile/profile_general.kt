@@ -1,5 +1,8 @@
 package com.example.myapplication.ui.screens.profile
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -15,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +30,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.poppins
 
@@ -38,6 +43,13 @@ fun UpdateProfileScreen(navController: NavController) {
     val genderOptions = listOf("Select", "Male", "Female")
     val selectedGender = remember { mutableStateOf(genderOptions[0]) }
     val expanded = remember { mutableStateOf(false) }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { selectedImageUri = it }
+    }
 
     // Calculate top padding based on status bar height
     val topPadding = with(LocalDensity.current) {
@@ -53,8 +65,8 @@ fun UpdateProfileScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = topPadding)
-            .verticalScroll(rememberScrollState())
-    ) {
+                .verticalScroll(rememberScrollState())
+        ) {
             // Header with back button
             Box(
                 modifier = Modifier
@@ -66,30 +78,30 @@ fun UpdateProfileScreen(navController: NavController) {
                     modifier = Modifier
                         .align(Alignment.CenterStart)
                         .size(45.dp)
-                    .clip(CircleShape)
+                        .clip(CircleShape)
                         .background(Color(0xFFFFFFFF))
                         .clickable { navController.popBackStack() }
                 ) {
                     IconButton(
                         onClick = { navController.popBackStack() },
                         modifier = Modifier.size(45.dp)
-            ) {
-                Icon(
+                    ) {
+                        Icon(
                             imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.Black,
+                            contentDescription = "Back",
+                            tint = Color.Black,
                             modifier = Modifier.size(32.dp)
-                )
-            }
+                        )
+                    }
                 }
 
                 // Title "Profile" at the center
-            Text(
-                text = "Profile",
+                Text(
+                    text = "Profile",
                     fontSize = 23.sp,
                     fontFamily = poppins,
                     fontWeight = FontWeight.SemiBold,
-                color = Color.Black,
+                    color = Color.Black,
                     modifier = Modifier.align(Alignment.Center)
                 )
                 
@@ -103,32 +115,43 @@ fun UpdateProfileScreen(navController: NavController) {
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
-        Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-        // Profile Image
+                // Profile Image
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                 ) {
                     Box(
-                modifier = Modifier
+                        modifier = Modifier
                             .size(120.dp)
-                    .clip(CircleShape)
+                            .clip(CircleShape)
+                            .background(Color.White)
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.account),
+                            painter = if (selectedImageUri != null) {
+                                rememberAsyncImagePainter(selectedImageUri)
+                            } else {
+                                painterResource(id = R.drawable.account)
+                            },
                             contentDescription = "Profile Image",
-                            modifier = Modifier.size(120.dp)
+                            modifier = Modifier
+                                .size(120.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
                         )
                     }
                     
                     // Edit button
                     Box(
-                modifier = Modifier
+                        modifier = Modifier
                             .size(30.dp)
                             .offset(x = 80.dp, y = 80.dp)
                             .clip(CircleShape)
                             .background(Color(0xFF149459))
+                            .clickable {
+                                galleryLauncher.launch("image/*")
+                            }
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.vectorpen),
@@ -138,51 +161,51 @@ fun UpdateProfileScreen(navController: NavController) {
                                 .align(Alignment.Center)
                         )
                     }
-        }
+                }
 
-        Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Tabs (General/Location)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.White)
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .background(Color(0xFF149459))
-                    .clickable { /* General tab */ },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "General",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .weight(1f)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(Color(0xFF149459))
+                            .clickable { /* General tab */ },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "General",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
                             .clickable { navController.navigate("ProfileLocation") },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Location",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-        }
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Location",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
+                }
 
-        Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-        // Full Name
+                // Full Name
                 Text(
                     text = "Full Name",
                     fontSize = 18.sp,
@@ -194,9 +217,9 @@ fun UpdateProfileScreen(navController: NavController) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = fullName.value,
-            onValueChange = { fullName.value = it },
+                OutlinedTextField(
+                    value = fullName.value,
+                    onValueChange = { fullName.value = it },
                     placeholder = { 
                         Text("Example: Ahmed Ahmad",
                             fontFamily = poppins,
@@ -206,8 +229,8 @@ fun UpdateProfileScreen(navController: NavController) {
                             letterSpacing = 0.08.sp) 
                     },
                     singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .height(50.dp)
                         .background(Color.White, RoundedCornerShape(14.dp)),
                     shape = RoundedCornerShape(14.dp),
@@ -220,11 +243,11 @@ fun UpdateProfileScreen(navController: NavController) {
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Next
                     )
-        )
+                )
 
-        Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-        // Phone Number
+                // Phone Number
                 Text(
                     text = "Phone Number",
                     fontSize = 18.sp,
@@ -236,8 +259,8 @@ fun UpdateProfileScreen(navController: NavController) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = phone.value,
+                OutlinedTextField(
+                    value = phone.value,
                     onValueChange = { phone.value = it },
                     placeholder = { 
                         Text("Enter your Phone Number",
@@ -247,7 +270,7 @@ fun UpdateProfileScreen(navController: NavController) {
                             color = Color.Black.copy(alpha = 0.6f),
                             letterSpacing = 0.08.sp) 
                     },
-            leadingIcon = {
+                    leadingIcon = {
                         Text(
                             text = "+213 |",
                             fontFamily = poppins,
@@ -256,10 +279,10 @@ fun UpdateProfileScreen(navController: NavController) {
                             color = Color.Black,
                             modifier = Modifier.padding(start = 16.dp, end = 8.dp)
                         )
-            },
+                    },
                     singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .height(50.dp)
                         .background(Color.White, RoundedCornerShape(14.dp)),
                     shape = RoundedCornerShape(14.dp),
@@ -299,7 +322,7 @@ fun UpdateProfileScreen(navController: NavController) {
                             color = Color.Black.copy(alpha = 0.6f),
                             letterSpacing = 0.08.sp) 
                     },
-            singleLine = true,
+                    singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
@@ -314,11 +337,11 @@ fun UpdateProfileScreen(navController: NavController) {
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     )
-        )
+                )
 
-        Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-        // Gender Dropdown
+                // Gender Dropdown
                 Text(
                     text = "Gender",
                     fontSize = 18.sp,
@@ -334,10 +357,10 @@ fun UpdateProfileScreen(navController: NavController) {
                     expanded = expanded.value,
                     onExpandedChange = { expanded.value = it },
                     modifier = Modifier.fillMaxWidth()
-        ) {
-            OutlinedTextField(
-                value = selectedGender.value,
-                onValueChange = {},
+                ) {
+                    OutlinedTextField(
+                        value = selectedGender.value,
+                        onValueChange = {},
                         readOnly = true,
                         placeholder = { 
                             Text("Select",
@@ -347,8 +370,8 @@ fun UpdateProfileScreen(navController: NavController) {
                                 color = Color.Black,
                                 letterSpacing = 0.08.sp) 
                         },
-                trailingIcon = {
-                    Icon(
+                        trailingIcon = {
+                            Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Select Gender",
                                 tint = Color.Black
@@ -368,11 +391,11 @@ fun UpdateProfileScreen(navController: NavController) {
                         )
                     )
                     ExposedDropdownMenu(
-                expanded = expanded.value,
-                onDismissRequest = { expanded.value = false }
-            ) {
+                        expanded = expanded.value,
+                        onDismissRequest = { expanded.value = false }
+                    ) {
                         genderOptions.forEach { option ->
-                    DropdownMenuItem(
+                            DropdownMenuItem(
                                 text = { 
                                     Text(
                                         text = option,
@@ -381,26 +404,26 @@ fun UpdateProfileScreen(navController: NavController) {
                                         fontSize = 15.sp
                                     )
                                 },
-                        onClick = {
+                                onClick = {
                                     selectedGender.value = option
-                            expanded.value = false
+                                    expanded.value = false
                                 }
-                    )
+                            )
+                        }
+                    }
                 }
-            }
-        }
 
                 Spacer(modifier = Modifier.height(40.dp))
 
                 // Update Button
-        Button(
-            onClick = { /* Handle update */ },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF149459)),
+                Button(
+                    onClick = { /* Handle update */ },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF149459)),
                     shape = RoundedCornerShape(16.dp),
-            modifier = Modifier
-                .fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .height(56.dp)
-        ) {
+                ) {
                     Text(
                         "Update Profile",
                         color = Color.White,
@@ -409,7 +432,7 @@ fun UpdateProfileScreen(navController: NavController) {
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.08.sp
                     )
-        }
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
