@@ -11,6 +11,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
 import com.example.myapplication.R
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 
 /**
  * Helper class to handle Google authentication

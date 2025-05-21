@@ -7,11 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.example.myapplication.navigation.AppNavigation
+import androidx.navigation.compose.rememberNavController
+import com.example.myapplication.navigation.NavGraph
 import com.example.myapplication.ui.theme.MyApplicationTheme
-import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,10 +21,16 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Set up the navigation
-                    AppNavigation()
+                    // Create a NavController that will be used for navigation
+                    val navController = rememberNavController()
+                    
+                    // Set up the navigation graph
+                    // This will handle all navigation between screens
+                    NavGraph(navController = navController)
                 }
             }
         }
     }
 }
+
+
