@@ -2,6 +2,7 @@ package com.example.myapplication.ui.screens.profile
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,7 +35,6 @@ import com.example.myapplication.R
 import com.example.myapplication.navigation.Screen
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.ui.theme.poppins
-import com.example.myapplication.utils.rememberImagePicker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,35 +48,31 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-    
-    // Initialize the image picker
-    val imagePicker = rememberImagePicker(
-        onImagePicked = { uri ->
-            viewModel.onProfileImageSelected(uri)
-        },
-        onError = { error ->
-            // Handle error, maybe show a snackbar
-            println("Image picker error: $error")
-        }
-    )
-    
+
+    // Image picker launcher
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.onProfileImageSelected(it) }
+    }
+
     // Show a dialog when there's an error
     if (uiState is ProfileUiState.Error) {
         val errorMessage = (uiState as ProfileUiState.Error).message
         AlertDialog(
-            onDismissRequest = { /* Dismiss the dialog */ },
+            onDismissRequest = { viewModel.clearError() },
             title = { Text("Error") },
             text = { Text(errorMessage) },
             confirmButton = {
                 TextButton(
-                    onClick = { /* Dismiss the dialog */ }
+                    onClick = { viewModel.clearError() }
                 ) {
                     Text("OK")
                 }
             }
         )
     }
-    
+
     // Show loading indicator when loading
     if (uiState is ProfileUiState.Loading) {
         Box(
@@ -88,12 +84,12 @@ fun ProfileScreen(
             CircularProgressIndicator()
         }
     }
-    
+
     // Calculate top padding based on status bar height
     val topPadding = with(LocalDensity.current) {
         WindowInsets.statusBars.getTop(this).toDp()
     }
-    
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -104,6 +100,7 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .padding(top = topPadding)
         ) {
+            // Header with back button and title
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -116,19 +113,15 @@ fun ProfileScreen(
                         .size(45.dp)
                         .clip(CircleShape)
                         .background(Color(0xFFFFFFFF))
-                        .clickable { onBackClick() }
+                        .clickable { onBackClick() },
+                    contentAlignment = Alignment.Center
                 ) {
-                    IconButton(
-                        onClick = { onBackClick() },
-                        modifier = Modifier.size(45.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.Black,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.Black,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
 
                 // Title "Profile" at the center
@@ -149,18 +142,17 @@ fun ProfileScreen(
                 contentAlignment = Alignment.BottomEnd,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .clickable { imagePicker.pickImage() }
+                    .clickable { imagePickerLauncher.launch("image/*") }
             ) {
                 // Show selected image or default
                 val painter = if (viewModel.profileImageUri != null) {
                     rememberAsyncImagePainter(
-                        model = viewModel.profileImageUri,
-                        contentScale = ContentScale.Crop
+                        model = viewModel.profileImageUri
                     )
                 } else {
                     painterResource(id = R.drawable.account)
                 }
-                
+
                 Image(
                     painter = painter,
                     contentDescription = "Profile Picture",
@@ -176,8 +168,8 @@ fun ProfileScreen(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(8.dp)
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
@@ -225,7 +217,7 @@ fun ProfileScreen(
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Email Field
                 OutlinedTextField(
                     value = viewModel.email,
@@ -237,13 +229,15 @@ fun ProfileScreen(
                             contentDescription = "Email"
                         )
                     },
-                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Email,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = KeyboardType.Email
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Phone Field
                 OutlinedTextField(
                     value = viewModel.phone,
@@ -255,14 +249,16 @@ fun ProfileScreen(
                             contentDescription = "Phone"
                         )
                     },
-                    keyboardType = KeyboardType.Phone,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = KeyboardType.Phone
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
             }
 
             Spacer(modifier = Modifier.weight(1f))
-            
+
             // Save Button
             Button(
                 onClick = { viewModel.updateProfile() },
@@ -273,14 +269,13 @@ fun ProfileScreen(
                 Text("Save Changes")
             }
 
-            Divider(modifier = Modifier.padding(vertical = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
             ProfileOption(
                 icon = R.drawable.log_out_icons,
                 label = "Log Out",
                 showArrow = false
             ) { navController.navigate(Screen.Logout.name) }
-            }
         }
 
         // Bottom Navigation Bar
@@ -309,7 +304,7 @@ fun ProfileOption(
         color = Color.Transparent
     ) {
         Row(
-            modifier = Modifier.padding(vertical = 12.dp),
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -415,16 +410,15 @@ fun BottomNavItem(
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(bgColor)
-                .padding(8.dp),
+                .background(bgColor),
             contentAlignment = Alignment.Center
         ) {
-                    Icon(
+            Icon(
                 painter = painterResource(id = iconRes),
                 contentDescription = label,
                 tint = itemColor,
                 modifier = Modifier.size(22.dp)
-                    )
+            )
         }
 
         Spacer(modifier = Modifier.height(4.dp))

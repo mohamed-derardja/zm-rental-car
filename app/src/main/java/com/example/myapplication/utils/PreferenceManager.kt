@@ -10,28 +10,35 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * A wrapper around SharedPreferences with type-safe getters/setters
+ * A wrapper around SharedPreferences with type-safe getters/setters and encryption support
  */
 @Singleton
 class PreferenceManager @Inject constructor(
-    @ApplicationContext context: Context
+    @ApplicationContext private val context: Context
 ) {
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
 
-    private val prefs: SharedPreferences = if (BuildConfig.DEBUG) {
-        // Use regular SharedPreferences in debug for easier debugging
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    } else {
-        // Use encrypted SharedPreferences in release
-        EncryptedSharedPreferences.create(
-            context,
-            PREFS_NAME,
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+    private val prefs: SharedPreferences by lazy {
+        try {
+            if (BuildConfig.DEBUG) {
+                // Use regular SharedPreferences in debug for easier debugging
+                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            } else {
+                // Use encrypted SharedPreferences in release
+                EncryptedSharedPreferences.create(
+                    context,
+                    PREFS_NAME,
+                    masterKey,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+                )
+            }
+        } catch (e: Exception) {
+            // Fallback to regular SharedPreferences if encryption fails
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        }
     }
 
     // Authentication

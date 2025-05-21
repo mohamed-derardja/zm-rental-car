@@ -5,8 +5,16 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.view.View
 import android.widget.Toast
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -45,9 +53,9 @@ fun Context.isNetworkAvailable(): Boolean {
     val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return false
     val network = connectivityManager.activeNetwork ?: return false
     val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-    
+
     return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-           capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
 }
 
 /**
@@ -154,4 +162,136 @@ fun String.truncate(maxLength: Int): String {
     } else {
         this
     }
-} 
+}
+
+/**
+ * Extension function to show a snackbar with a message
+ */
+@Composable
+fun ShowSnackbar(
+    snackbarHostState: SnackbarHostState,
+    message: String,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
+) {
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(message) {
+        val result = snackbarHostState.showSnackbar(
+            message = message,
+            actionLabel = actionLabel
+        )
+        when (result) {
+            SnackbarResult.ActionPerformed -> onAction?.invoke()
+            SnackbarResult.Dismissed -> { /* Handle dismissal if needed */ }
+        }
+    }
+}
+
+/**
+ * Extension function to show a snackbar with a message and action
+ */
+fun SnackbarHostState.showSnackbarWithAction(
+    scope: CoroutineScope,
+    message: String,
+    actionLabel: String,
+    onAction: () -> Unit
+) {
+    scope.launch {
+        val result = showSnackbar(
+            message = message,
+            actionLabel = actionLabel
+        )
+        if (result == SnackbarResult.ActionPerformed) {
+            onAction()
+        }
+    }
+}
+
+/**
+ * Extension function to show a snackbar with a message and duration
+ */
+fun SnackbarHostState.showSnackbarWithDuration(
+    scope: CoroutineScope,
+    message: String,
+    duration: SnackbarDuration = SnackbarDuration.Short
+) {
+    scope.launch {
+        showSnackbar(
+            message = message,
+            duration = duration
+        )
+    }
+}
+
+/**
+ * Extension function to show a snackbar with a message, action, and duration
+ */
+fun SnackbarHostState.showSnackbarWithActionAndDuration(
+    scope: CoroutineScope,
+    message: String,
+    actionLabel: String,
+    onAction: () -> Unit,
+    duration: SnackbarDuration = SnackbarDuration.Short
+) {
+    scope.launch {
+        val result = showSnackbar(
+            message = message,
+            actionLabel = actionLabel,
+            duration = duration
+        )
+        if (result == SnackbarResult.ActionPerformed) {
+            onAction()
+        }
+    }
+}
+
+/**
+ * Composable function to show a snackbar with a message and error styling
+ */
+@Composable
+fun ShowErrorSnackbar(
+    snackbarHostState: SnackbarHostState,
+    message: String,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
+) {
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(message) {
+        val result = snackbarHostState.showSnackbar(
+            message = message,
+            actionLabel = actionLabel,
+            duration = SnackbarDuration.Long
+        )
+        when (result) {
+            SnackbarResult.ActionPerformed -> onAction?.invoke()
+            SnackbarResult.Dismissed -> { /* Handle dismissal if needed */ }
+        }
+    }
+}
+
+/**
+ * Composable function to show a snackbar with a message and success styling
+ */
+@Composable
+fun ShowSuccessSnackbar(
+    snackbarHostState: SnackbarHostState,
+    message: String,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
+) {
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(message) {
+        val result = snackbarHostState.showSnackbar(
+            message = message,
+            actionLabel = actionLabel,
+            duration = SnackbarDuration.Short
+        )
+        when (result) {
+            SnackbarResult.ActionPerformed -> onAction?.invoke()
+            SnackbarResult.Dismissed -> { /* Handle dismissal if needed */ }
+        }
+    }
+}

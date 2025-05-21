@@ -6,37 +6,28 @@ import android.net.NetworkCapabilities
 import android.os.Build
 import com.example.myapplication.BuildConfig
 import okhttp3.Interceptor
+import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+/**
+ * Utility class for network-related operations
+ */
 object NetworkUtils {
-    
+    private const val TIMEOUT_SECONDS = 30L
+
     /**
      * Check if the device has an active internet connection
      */
     fun isNetworkAvailable(context: Context): Boolean {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
         
-        // For 29+ (Android 10+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork) ?: return false
-            return when {
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-                else -> false
-            }
-        } else {
-            // For older versions
-            @Suppress("DEPRECATION")
-            val activeNetwork = connectivityManager.activeNetworkInfo ?: return false
-            @Suppress("DEPRECATION")
-            return activeNetwork.isConnected && (activeNetwork.type == ConnectivityManager.TYPE_WIFI ||
-                    activeNetwork.type == ConnectivityManager.TYPE_MOBILE ||
-                    activeNetwork.type == ConnectivityManager.TYPE_ETHERNET)
-        }
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+               capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
     
     /**
@@ -55,36 +46,21 @@ object NetworkUtils {
     /**
      * Create an interceptor for adding common headers
      */
-    fun getHeaderInterceptor(): Interceptor {
-        return Interceptor { chain ->
-            val original = chain.request()
-            
-            // Add common headers here
-            val request = original.newBuilder()
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .method(original.method, original.body)
-                .build()
-            
-            chain.proceed(request)
+    fun getHeaderInterceptor(): HttpLoggingInterceptor {
+        return HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
         }
     }
     
     /**
-     * Create an interceptor for handling network timeouts
+     * Create an OkHttpClient with timeout configuration
      */
-    fun getTimeoutInterceptor() = Interceptor { chain ->
-        val request = chain.request()
-        
-        // Set timeout values
-        val timeout = 30L // seconds
-        val newRequest = request.newBuilder()
-            .connectTimeout(timeout, TimeUnit.SECONDS)
-            .readTimeout(timeout, TimeUnit.SECONDS)
-            .writeTimeout(timeout, TimeUnit.SECONDS)
+    fun getOkHttpClient(): OkHttpClient {
+        return OkHttpClient.Builder()
+            .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build()
-            
-        chain.proceed(newRequest)
     }
     
     /**
@@ -97,18 +73,18 @@ object NetworkUtils {
     /**
      * Check if the response is successful (status code 200-299)
      */
-    fun isResponseSuccessful(response: okhttp3.Response): Boolean {
+    fun isResponseSuccessful(response: Response): Boolean {
         return response.isSuccessful
     }
     
     /**
      * Parse error response from the API
      */
-    fun parseErrorResponse(response: okhttp3.Response): String {
+    fun parseErrorResponse(response: Response): String {
         return try {
             response.body?.string() ?: "Unknown error occurred"
         } catch (e: Exception) {
-            "Error parsing error response: ${e.message}"
+            "Error parsing response: ${e.message}"
         }
     }
 }
