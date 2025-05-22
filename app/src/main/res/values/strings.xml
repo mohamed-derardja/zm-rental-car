@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Rental Car App</string>
+    
+    <!-- Facebook Configuration -->
+    <string name="facebook_app_id">YOUR_FACEBOOK_APP_ID</string>
+    <string name="fb_login_protocol_scheme">fbYOUR_FACEBOOK_APP_ID</string>
+    
+    <!-- Facebook Login Messages -->
+    <string name="facebook_login_canceled">Facebook login was canceled</string>
+    <string name="facebook_login_error">Failed to login with Facebook</string>
+    
+    <!-- Google Configuration -->
+    <string name="default_web_client_id">596782402349-l4bdqcmlh0nrudhnqgtls3banu6ga4od.apps.googleusercontent.com</string>
+    
+    <!-- Google Sign-In Messages -->
+    <string name="google_sign_in_error">Google Sign-In failed. Please try again.</string>
+    <string name="google_sign_in_canceled">Google Sign-In was canceled.</string>
+    <string name="google_sign_in_network_error">Network error during Google Sign-In.</string>
+    
+    <!-- Authentication -->
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="create_account">Create Account</string>
+    <string name="dont_have_account">Don\'t have an account?</string>
+    <string name="already_have_account">Already have an account?</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="remember_me">Remember Me</string>
+    
+    <!-- Social Login -->
+    <string name="facebook">Continue with Facebook</string>
+    <string name="google">Continue with Google</string>
+    
+    <!-- Error Messages -->
+    <string name="error_invalid_email">Invalid email address</string>
+    <string name="error_invalid_password">Password must be at least 6 characters</string>
+    <string name="error_login_failed">Login failed. Please try again.</string>
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="error_unknown">An unknown error occurred</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_profile">Profile</string>
+    <string name="nav_cars">Cars</string>
+    <string name="nav_reservations">Reservations</string>
+    <string name="nav_settings">Settings</string>
+</resources>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Background element -->
+    <path
+        android:fillColor="#E0E6FF"
+        android:pathData="M30,140a70,40 0,1 0,140 0a70,40 0,1 0,-140 0" />
+
+    <!-- Car body - sports car design -->
+    <path
+        android:fillColor="#4A64FE"
+        android:pathData="M35,125 L45,100 L60,80 L140,80 L155,100 L165,125 Z" />
+        
+    <!-- Car roof -->
+    <path
+        android:fillColor="#2A3FD5"
+        android:pathData="M70,80 L85,60 L115,60 L130,80 Z" />
+        
+    <!-- Windows -->
+    <path
+        android:fillColor="#E0E6FF"
+        android:pathData="M75,78 L88,63 L112,63 L125,78 Z" />
+        
+    <!-- Wheels -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M55,125a12,12 0,1 1,24 0a12,12 0,1 1,-24 0" />
+    <path
+        android:fillColor="#333333"
+        android:pathData="M125,125a12,12 0,1 1,24 0a12,12 0,1 1,-24 0" />
+        
+    <!-- Wheel details -->
+    <path
+        android:fillColor="#666666"
+        android:pathData="M62,125a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path
+        android:fillColor="#666666"
+        android:pathData="M132,125a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    
+    <!-- Wheel spokes - left wheel -->
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M67,125 L67,113" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M67,125 L59,120" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M67,125 L59,130" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M67,125 L67,137" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M67,125 L75,120" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M67,125 L75,130" />
+    
+    <!-- Wheel spokes - right wheel -->
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M137,125 L137,113" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M137,125 L129,120" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M137,125 L129,130" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M137,125 L137,137" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M137,125 L145,120" />
+    <path
+        android:strokeColor="#CCCCCC"
+        android:strokeWidth="1.5"
+        android:pathData="M137,125 L145,130" />
+        
+    <!-- Headlights -->
+    <path
+        android:fillColor="#FFCC00"
+        android:pathData="M45,105a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <path
+        android:fillColor="#FFCC00"
+        android:pathData="M147,105a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+        
+    <!-- Front grill -->
+    <path
+        android:strokeColor="#333333"
+        android:strokeWidth="2"
+        android:pathData="M95,112a15,5 0,1 1,10 0" />
+    
+    <!-- Door lines -->
+    <path
+        android:strokeColor="#2A3FD5"
+        android:strokeWidth="1.5"
+        android:pathData="M90,80 L90,110" />
+    <path
+        android:strokeColor="#2A3FD5"
+        android:strokeWidth="1.5"
+        android:pathData="M110,80 L110,110" />
+</vector> 

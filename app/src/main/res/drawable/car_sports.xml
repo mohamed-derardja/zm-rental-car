@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="120dp"
+    android:viewportWidth="200"
+    android:viewportHeight="120">
+
+    <!-- Sports Car Body -->
+    <path
+        android:fillColor="#1DA756"
+        android:pathData="M25,80 L40,65 L60,55 L140,55 L160,65 L175,80 Z" />
+
+    <!-- Car Roof - Sports cars have a low profile -->
+    <path
+        android:fillColor="#15803D"
+        android:pathData="M75,55 L85,40 L115,40 L125,55 Z" />
+
+    <!-- Windows -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M78,53 L88,43 L112,43 L122,53 Z" />
+
+    <!-- Car Door Line -->
+    <path
+        android:strokeColor="#15803D"
+        android:strokeWidth="1.5"
+        android:pathData="M95,55 L95,75" />
+
+    <path
+        android:strokeColor="#15803D"
+        android:strokeWidth="1.5"
+        android:pathData="M105,55 L105,75" />
+
+    <!-- Headlights -->
+    <path
+        android:fillColor="#FFCC66"
+        android:pathData="M40,65 L45,65 L45,70 L40,70 Z" />
+    <path
+        android:fillColor="#FFCC66"
+        android:pathData="M155,65 L160,65 L160,70 L155,70 Z" />
+
+    <!-- Grille -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M90,70 L110,70 L110,75 L90,75 Z" />
+
+    <!-- Wheels -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M50,80a15,15 0,1 1,30 0a15,15 0,1 1,-30 0" />
+    <path
+        android:fillColor="#333333"
+        android:pathData="M120,80a15,15 0,1 1,30 0a15,15 0,1 1,-30 0" />
+
+    <!-- Wheel Centers -->
+    <path
+        android:fillColor="#999999"
+        android:pathData="M65,80a6,6 0,1 1,-12 0a6,6 0,1 1,12 0" />
+    <path
+        android:fillColor="#999999"
+        android:pathData="M135,80a6,6 0,1 1,-12 0a6,6 0,1 1,12 0" />
+
+    <!-- Sports Car Spoiler -->
+    <path
+        android:fillColor="#15803D"
+        android:pathData="M155,60 L165,60 L165,65 L155,65 Z" />
+</vector> 

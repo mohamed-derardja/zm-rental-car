@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="120dp"
+    android:viewportWidth="200"
+    android:viewportHeight="120">
+
+    <!-- Sedan Car Body -->
+    <path
+        android:fillColor="#E86A33"
+        android:pathData="M25,80 L45,60 L70,45 L130,45 L155,60 L175,80 Z" />
+
+    <!-- Car Roof -->
+    <path
+        android:fillColor="#BC4916"
+        android:pathData="M70,45 L80,30 L120,30 L130,45 Z" />
+
+    <!-- Windows -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M73,43 L83,33 L117,33 L127,43 Z" />
+
+    <!-- Car Door Line -->
+    <path
+        android:strokeColor="#BC4916"
+        android:strokeWidth="1.5"
+        android:pathData="M90,45 L90,75" />
+
+    <path
+        android:strokeColor="#BC4916"
+        android:strokeWidth="1.5"
+        android:pathData="M110,45 L110,75" />
+
+    <!-- Headlights -->
+    <path
+        android:fillColor="#FFCC66"
+        android:pathData="M45,65 L55,65 L55,72 L45,72 Z" />
+    <path
+        android:fillColor="#FFCC66"
+        android:pathData="M145,65 L155,65 L155,72 L145,72 Z" />
+
+    <!-- Grille -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M88,70 L112,70 L112,76 L88,76 Z" />
+
+    <!-- Wheels -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M50,80a15,15 0,1 1,30 0a15,15 0,1 1,-30 0" />
+    <path
+        android:fillColor="#333333"
+        android:pathData="M120,80a15,15 0,1 1,30 0a15,15 0,1 1,-30 0" />
+
+    <!-- Wheel Centers -->
+    <path
+        android:fillColor="#999999"
+        android:pathData="M65,80a6,6 0,1 1,-12 0a6,6 0,1 1,12 0" />
+    <path
+        android:fillColor="#999999"
+        android:pathData="M135,80a6,6 0,1 1,-12 0a6,6 0,1 1,12 0" />
+
+    <!-- Car Trunk -->
+    <path
+        android:strokeColor="#BC4916"
+        android:strokeWidth="1.5"
+        android:pathData="M130,60 L155,60" />
+</vector> 
