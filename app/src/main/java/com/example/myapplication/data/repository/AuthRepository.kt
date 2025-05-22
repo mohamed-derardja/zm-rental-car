@@ -34,12 +34,12 @@ interface AuthRepository {
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
-    private val userRepository: UserRepository,
     private val preferenceManager: PreferenceManager
 ) : AuthRepository {
 
     override suspend fun login(email: String, password: String): Result<User> = withContext(Dispatchers.IO) {
         try {
+            // Attempt to get login credentials
             val response = apiService.login(email, password)
             
             // Save the auth token
@@ -47,10 +47,22 @@ class AuthRepositoryImpl @Inject constructor(
             preferenceManager.userId = response.id.toString()
             preferenceManager.isLoggedIn = true
             
-            // Get the user profile
-            val user = userRepository.getUserById(response.id).getOrThrow()
+            // Get the user profile directly from API with error handling
+            try {
+                val user = apiService.getUserById(response.id, "Bearer ${response.token}")
             Result.success(user)
+            } catch (e: Exception) {
+                // If we can't get user details but have a token, return a simple User object
+                val basicUser = User(
+                    id = response.id,
+                    name = email.substringBefore("@"),
+                    email = email,
+                    phone = null
+                )
+                Result.success(basicUser)
+            }
         } catch (e: Exception) {
+            preferenceManager.clear() // Clear any partial auth state on failure
             Result.failure(e)
         }
     }
@@ -64,10 +76,22 @@ class AuthRepositoryImpl @Inject constructor(
             preferenceManager.userId = response.id.toString()
             preferenceManager.isLoggedIn = true
             
-            // Get the user profile
-            val user = userRepository.getUserById(response.id).getOrThrow()
+            // Get the user profile directly from API with error handling
+            try {
+                val user = apiService.getUserById(response.id, "Bearer ${response.token}")
             Result.success(user)
+            } catch (e: Exception) {
+                // If we can't get user details but have a token, return a simple User object
+                val basicUser = User(
+                    id = response.id,
+                    name = name,
+                    email = email,
+                    phone = phone
+                )
+                Result.success(basicUser)
+            }
         } catch (e: Exception) {
+            preferenceManager.clear() // Clear any partial auth state on failure
             Result.failure(e)
         }
     }
@@ -81,10 +105,22 @@ class AuthRepositoryImpl @Inject constructor(
             preferenceManager.userId = response.id.toString()
             preferenceManager.isLoggedIn = true
 
-            // Get the user profile
-            val user = userRepository.getUserById(response.id).getOrThrow()
+            // Get the user profile directly from API with error handling
+            try {
+                val user = apiService.getUserById(response.id, "Bearer ${response.token}")
             Result.success(user)
+            } catch (e: Exception) {
+                // If we can't get user details but have a token, return a simple User object
+                val basicUser = User(
+                    id = response.id,
+                    name = "Facebook User",
+                    email = "",
+                    phone = null
+                )
+                Result.success(basicUser)
+            }
         } catch (e: Exception) {
+            preferenceManager.clear() // Clear any partial auth state on failure
             Result.failure(e)
         }
     }
@@ -98,10 +134,22 @@ class AuthRepositoryImpl @Inject constructor(
             preferenceManager.userId = response.id.toString()
             preferenceManager.isLoggedIn = true
 
-            // Get the user profile
-            val user = userRepository.getUserById(response.id).getOrThrow()
+            // Get the user profile directly from API with error handling
+            try {
+                val user = apiService.getUserById(response.id, "Bearer ${response.token}")
             Result.success(user)
+            } catch (e: Exception) {
+                // If we can't get user details but have a token, return a simple User object
+                val basicUser = User(
+                    id = response.id,
+                    name = "Google User",
+                    email = "",
+                    phone = null
+                )
+                Result.success(basicUser)
+            }
         } catch (e: Exception) {
+            preferenceManager.clear() // Clear any partial auth state on failure
             Result.failure(e)
         }
     }

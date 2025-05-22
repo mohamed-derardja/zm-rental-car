@@ -8,7 +8,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -236,10 +235,11 @@ fun UpdateProfileScreen(navController: NavController) {
                         .height(50.dp)
                         .background(Color.White, RoundedCornerShape(14.dp)),
                     shape = RoundedCornerShape(14.dp),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFD9D9D9),
                         unfocusedBorderColor = Color(0xFFD9D9D9),
-                        containerColor = Color.White
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
                     ),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
@@ -288,10 +288,11 @@ fun UpdateProfileScreen(navController: NavController) {
                         .height(50.dp)
                         .background(Color.White, RoundedCornerShape(14.dp)),
                     shape = RoundedCornerShape(14.dp),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFD9D9D9),
                         unfocusedBorderColor = Color(0xFFD9D9D9),
-                        containerColor = Color.White
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
                     ),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Phone,
@@ -330,10 +331,11 @@ fun UpdateProfileScreen(navController: NavController) {
                         .height(50.dp)
                         .background(Color.White, RoundedCornerShape(14.dp)),
                     shape = RoundedCornerShape(14.dp),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                    colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFD9D9D9),
                         unfocusedBorderColor = Color(0xFFD9D9D9),
-                        containerColor = Color.White
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
                     ),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
@@ -386,10 +388,11 @@ fun UpdateProfileScreen(navController: NavController) {
                             .menuAnchor()
                             .background(Color.White, RoundedCornerShape(14.dp)),
                         shape = RoundedCornerShape(14.dp),
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
+                        colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFD9D9D9),
                             unfocusedBorderColor = Color(0xFFD9D9D9),
-                            containerColor = Color.White
+                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = Color.White
                         )
                     )
                     ExposedDropdownMenu(

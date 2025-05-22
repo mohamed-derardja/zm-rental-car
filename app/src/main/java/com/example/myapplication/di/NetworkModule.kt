@@ -12,6 +12,10 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
+import okhttp3.ConnectionPool
+import okhttp3.Interceptor
+import okhttp3.Response
+import timber.log.Timber
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -21,9 +25,35 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
         val builder = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(60, TimeUnit.SECONDS)  // Increased timeout
+            .readTimeout(60, TimeUnit.SECONDS)     // Increased timeout
+            .writeTimeout(60, TimeUnit.SECONDS)    // Increased timeout
+            .retryOnConnectionFailure(true)        // Retry on connection failure
+            .connectionPool(ConnectionPool(5, 30, TimeUnit.SECONDS)) // Better connection pooling
+
+        // Add network error interceptor
+        builder.addInterceptor(object : Interceptor {
+            override fun intercept(chain: Interceptor.Chain): Response {
+                try {
+                    val request = chain.request()
+                    
+                    // Log request details
+                    Timber.d("Making request: ${request.url}")
+                    
+                    // Try to execute the request
+                    val response = chain.proceed(request)
+                    
+                    // Log response details
+                    Timber.d("Received response: ${response.code}")
+                    
+                    return response
+                } catch (e: Exception) {
+                    // Log the error
+                    Timber.e("Network error: ${e.message}")
+                    throw e
+                }
+            }
+        })
 
         if (BuildConfig.DEBUG) {
             val loggingInterceptor = HttpLoggingInterceptor().apply {

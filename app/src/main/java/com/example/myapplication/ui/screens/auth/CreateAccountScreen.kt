@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.screens.auth
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -36,14 +37,21 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.foundation.text.ClickableText
-
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateAccountScreen(
     onSignInClick: () -> Unit = {},
-    onCreateAccountSuccess: () -> Unit = {}
+    onCreateAccountSuccess: () -> Unit = {},
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
+    // Get local context for Toast
+    val context = LocalContext.current
+    
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -53,10 +61,36 @@ fun CreateAccountScreen(
     var showTermsDialog by remember { mutableStateOf(false) }
 
     // Error state variables
+    var nameError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
     var confirmPasswordError by remember { mutableStateOf<String?>(null) }
     var termsError by remember { mutableStateOf<String?>(null) }
+    
+    val uiState by viewModel.uiState.collectAsState()
+    
+    LaunchedEffect(uiState) {
+        Log.d("CreateAccountScreen", "UI State changed: $uiState")
+        when (uiState) {
+            is AuthUiState.Success -> {
+                Log.d("CreateAccountScreen", "Success state detected, navigating...")
+                // Call onCreateAccountSuccess to navigate to OTP verification
+                onCreateAccountSuccess()
+            }
+            is AuthUiState.Error -> {
+                // You could show an error message here
+                val errorMsg = (uiState as AuthUiState.Error).message
+                // For now, we'll just log it
+                Log.e("CreateAccountScreen", "Error: $errorMsg")
+            }
+            is AuthUiState.Loading -> {
+                Log.d("CreateAccountScreen", "Loading state...")
+            }
+            else -> {
+                Log.d("CreateAccountScreen", "Idle or other state")
+            }
+        }
+    }
     
     // Terms and Conditions Dialog
     if (showTermsDialog) {
@@ -66,6 +100,16 @@ fun CreateAccountScreen(
     }
     
     // Validation functions
+    fun validateName(): Boolean {
+        return if (name.isBlank()) {
+            nameError = "Full name is required"
+            false
+        } else {
+            nameError = null
+            true
+        }
+    }
+    
     fun validateEmail(): Boolean {
         val emailRegex = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$")
         return if (email.isBlank()) {
@@ -117,11 +161,12 @@ fun CreateAccountScreen(
     }
     
     fun validateForm(): Boolean {
+        val nameValid = validateName()
         val emailValid = validateEmail()
         val passwordValid = validatePassword()
         val confirmPasswordValid = validateConfirmPassword()
         val termsValid = validateTerms()
-        return emailValid && passwordValid && confirmPasswordValid && termsValid
+        return nameValid && emailValid && passwordValid && confirmPasswordValid && termsValid
     }
 
     Box(
@@ -134,10 +179,76 @@ fun CreateAccountScreen(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CreateAccountTopDecoration()
+            
+            // Full Name
+            Text(
+                text = "Full Name",
+                fontSize = 18.sp,
+                fontFamily = poppins,
+                fontWeight = FontWeight.Normal,
+                color = Color.Black,
+                letterSpacing = 0.08.sp,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = name,
+                onValueChange = { 
+                    name = it 
+                    if (nameError != null) validateName()
+                },
+                placeholder = { Text("Enter your full name",
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 15.sp,
+                    color = Color.Black.copy(alpha = 0.6f),
+                    letterSpacing = 0.08.sp) },
+                textStyle = androidx.compose.ui.text.TextStyle(
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 15.sp,
+                    color = Color.Black,
+                    letterSpacing = 0.08.sp
+                ),
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .background(Color.White, RoundedCornerShape(14.dp)),
+                shape = RoundedCornerShape(14.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = Color(0xFFD9D9D9),
+                    unfocusedBorderColor = Color(0xFFD9D9D9),
+                    containerColor = Color.White,
+                    errorBorderColor = Color.Red
+                ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+                isError = nameError != null
+            )
+            
+            if (nameError != null) {
+                Text(
+                    text = nameError ?: "",
+                    color = Color.Red,
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 12.sp,
+                    letterSpacing = 0.08.sp,
+                    modifier = Modifier
+                        .align(Alignment.Start)
+                        .padding(start = 4.dp, top = 4.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
             
             // Email
             Text(
@@ -415,7 +526,16 @@ fun CreateAccountScreen(
             Button(
                 onClick = { 
                     if (validateForm()) {
-                        onCreateAccountSuccess()
+                        Log.d("CreateAccountScreen", "Create button clicked, validating form passed")
+                        // Give immediate UI feedback with toast or snackbar
+                        android.widget.Toast.makeText(
+                            context,
+                            "Creating account...",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                        viewModel.register(name, email, password)
+                    } else {
+                        Log.d("CreateAccountScreen", "Form validation failed")
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF149459)),
@@ -424,6 +544,12 @@ fun CreateAccountScreen(
                     .fillMaxWidth()
                     .height(56.dp)
             ) {
+                if (uiState is AuthUiState.Loading) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else {
                 Text(
                     "Create",
                     color = Color.White,
@@ -432,6 +558,7 @@ fun CreateAccountScreen(
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 0.08.sp
                 )
+                }
             }
             Spacer(modifier = Modifier.height(24.dp))
             Row(

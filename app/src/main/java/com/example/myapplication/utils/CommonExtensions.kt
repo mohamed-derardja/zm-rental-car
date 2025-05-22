@@ -12,7 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.fragment.app.Fragment
+// Import the full material snackbar class to avoid name conflicts
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.snackbar.BaseTransientBottomBar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -29,7 +31,7 @@ fun Context.showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {
 /**
  * Extension function to show a snackbar message
  */
-fun View.showSnackbar(message: String, duration: Int = Snackbar.LENGTH_SHORT) {
+fun View.showSnackbar(message: String, duration: Int = BaseTransientBottomBar.LENGTH_SHORT) {
     Snackbar.make(this, message, duration).show()
 }
 
@@ -39,7 +41,7 @@ fun View.showSnackbar(message: String, duration: Int = Snackbar.LENGTH_SHORT) {
 fun View.showSnackbarWithAction(
     message: String,
     actionText: String,
-    duration: Int = Snackbar.LENGTH_LONG,
+    duration: Int = BaseTransientBottomBar.LENGTH_LONG,
     action: () -> Unit
 ) {
     Snackbar.make(this, message, duration)
@@ -57,7 +59,7 @@ fun Fragment.showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {
 /**
  * Extension function to show a snackbar message in a Fragment
  */
-fun Fragment.showSnackbar(message: String, duration: Int = Snackbar.LENGTH_SHORT) {
+fun Fragment.showSnackbar(message: String, duration: Int = BaseTransientBottomBar.LENGTH_SHORT) {
     requireView().showSnackbar(message, duration)
 }
 
@@ -67,7 +69,7 @@ fun Fragment.showSnackbar(message: String, duration: Int = Snackbar.LENGTH_SHORT
 fun Fragment.showSnackbarWithAction(
     message: String,
     actionText: String,
-    duration: Int = Snackbar.LENGTH_LONG,
+    duration: Int = BaseTransientBottomBar.LENGTH_LONG,
     action: () -> Unit
 ) {
     requireView().showSnackbarWithAction(message, actionText, duration, action)

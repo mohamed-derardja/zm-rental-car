@@ -174,7 +174,14 @@ fun NavGraph(
         composable(Screen.CreateAccount.name) {
             CreateAccountScreen(
                 onSignInClick = { navController.navigate(Screen.SignIn.name) },
-                onCreateAccountSuccess = { navController.navigate(Screen.OTPVerification.name) }
+                onCreateAccountSuccess = { 
+                    // Add debug logging
+                    Log.d("NavGraph", "Navigating to OTP verification after successful registration")
+                    // Navigate to OTP verification and remove CreateAccount from back stack
+                    navController.navigate("${Screen.OTPVerification.name}?fromForgotPassword=false") {
+                        popUpTo(Screen.CreateAccount.name) { inclusive = true }
+                    }
+                }
             )
         }
 

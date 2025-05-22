@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -112,7 +112,6 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .padding(top = topPadding)
         ) {
-            // Header with back button and title
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -125,15 +124,19 @@ fun ProfileScreen(
                         .size(45.dp)
                         .clip(CircleShape)
                         .background(Color(0xFFFFFFFF))
-                        .clickable { onBackClick() },
-                    contentAlignment = Alignment.Center
+                        .clickable { onBackClick() }
+                ) {
+                    IconButton(
+                        onClick = { onBackClick() },
+                        modifier = Modifier.size(45.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
                         tint = Color.Black,
-                        modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(32.dp)
                     )
+                    }
                 }
 
                 // Title "Profile" at the center
@@ -149,12 +152,10 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Profile picture with edit button
+            // Profile picture
             Box(
                 contentAlignment = Alignment.BottomEnd,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .clickable { imagePickerLauncher.launch("image/*") }
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
                 // Show selected image or default
                 val painter = if (viewModel.profileImageUri != null) {
@@ -167,27 +168,27 @@ fun ProfileScreen(
 
                 Image(
                     painter = painter,
-                    contentDescription = "Profile Picture",
+                    contentDescription = "Profile Image",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(120.dp)
+                        .size(140.dp)
                         .clip(CircleShape)
-                        .background(Color.LightGray)
+                        .clickable { imagePickerLauncher.launch("image/*") }
                 )
 
-                // Edit icon
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .offset(x = (-4).dp, y = (-4).dp)
+                        .size(32.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center
+                        .background(Color.White)
+                        .padding(4.dp)
+                        .clickable { imagePickerLauncher.launch("image/*") }
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit Profile Picture",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+                    Image(
+                        painter = painterResource(id = R.drawable.edit_icon),
+                        contentDescription = "Edit",
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }
@@ -195,7 +196,7 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = viewModel.name,
+                text = viewModel.name.value.ifEmpty { "User Profile" },
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(vertical = 8.dp),
@@ -207,87 +208,41 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // User Information
+            // Profile options in a Column with horizontal padding
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 80.dp) // Add padding for bottom nav bar
             ) {
-                // Name Field
-                OutlinedTextField(
-                    value = viewModel.name,
-                    onValueChange = { viewModel.onNameChange(it) },
-                    label = { Text("Full Name") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Name"
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                ProfileOption(
+                    icon = R.drawable.profil,
+                    label = "Your Profile"
+                ) { navController.navigate(Screen.ProfileGeneral.name) }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                ProfileOption(
+                    icon = R.drawable.setting_line,
+                    label = "Settings"
+                ) { navController.navigate(Screen.Settings.name) }
 
-                // Email Field
-                OutlinedTextField(
-                    value = viewModel.email,
-                    onValueChange = { viewModel.onEmailChange(it) },
-                    label = { Text("Email") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Email,
-                            contentDescription = "Email"
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                ProfileOption(
+                    icon = R.drawable.mdi_question_mark_circle_outline,
+                    label = "Help & Support"
+                ) { navController.navigate(Screen.HelpCenter.name) }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                ProfileOption(
+                    icon = R.drawable.ic_outline_lock,
+                    label = "Privacy & Policy"
+                ) { navController.navigate(Screen.PrivacyPolicy.name) }
 
-                // Phone Field
-                OutlinedTextField(
-                    value = viewModel.phone,
-                    onValueChange = { viewModel.onPhoneChange(it) },
-                    label = { Text("Phone") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Phone,
-                            contentDescription = "Phone"
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Phone
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Save Button
-            Button(
-                onClick = { viewModel.updateProfile() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp)
-            ) {
-                Text("Save Changes")
-            }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                Divider(modifier = Modifier.padding(vertical = 16.dp))
 
             ProfileOption(
                 icon = R.drawable.log_out_icons,
                 label = "Log Out",
                 showArrow = false
             ) { navController.navigate(Screen.Logout.name) }
+            }
         }
 
         // Bottom Navigation Bar
@@ -316,7 +271,7 @@ fun ProfileOption(
         color = Color.Transparent
     ) {
         Row(
-            modifier = Modifier.padding(vertical = 12.dp, horizontal = 24.dp),
+            modifier = Modifier.padding(vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -422,7 +377,8 @@ fun BottomNavItem(
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(bgColor),
+                .background(bgColor)
+                .padding(8.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(

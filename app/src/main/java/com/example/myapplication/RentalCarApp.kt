@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.StrictMode
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import androidx.work.WorkManager
 import com.example.myapplication.utils.PreferenceManager
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
@@ -44,13 +43,8 @@ class RentalCarApp : Application(), Configuration.Provider {
         // Initialize any third-party libraries here
         // FirebaseApp.initializeApp(this)
         
-        // Setup WorkManager
-        WorkManager.initialize(
-            this,
-            Configuration.Builder()
-                .setWorkerFactory(workerFactory)
-                .build()
-        )
+        // No need to manually initialize WorkManager when implementing Configuration.Provider
+        // WorkManager will be initialized automatically using getWorkManagerConfiguration()
     }
     
     private fun enableStrictMode() {
