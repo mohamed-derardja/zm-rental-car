@@ -1,0 +1,44 @@
+# Gradle files
+.gradle/
+build/
+
+# Local configuration file
+local.properties
+
+# IntelliJ IDEA
+*.iml
+.idea/
+
+# Android Studio captures folder
+captures/
+
+# External native build folder
+.externalNativeBuild/
+.cxx/
+
+# Generated files
+bin/
+gen/
+out/
+
+# Gradle wrapper
+!gradle-wrapper.jar
+
+# Log Files
+*.log
+
+# Android Studio Navigation editor temp files
+.navigation/
+
+# Google Services (e.g., APIs or Firebase)
+google-services.json
+
+# Keystore files
+*.jks
+*.keystore
+
+# macOS
+.DS_Store
+
+# Version control
+vcs.xml 
