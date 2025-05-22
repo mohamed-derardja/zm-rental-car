@@ -52,6 +52,12 @@ import com.example.myapplication.ui.screens.home.CarBookingScreen as HomeCarBook
 import com.example.myapplication.ui.screens.payment.CarBookingScreen as PaymentCarBookingScreen
 import com.example.myapplication.ui.screens.password.ChangePasswordScreen
 import com.example.myapplication.ui.screens.auth.OTPVerificationScreen
+import com.example.myapplication.ui.screens.auth.ForgotPasswordScreen
+import com.example.myapplication.ui.screens.auth.ResetPasswordScreen
+import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Enum class that contains all the possible screens in our app
@@ -69,6 +75,8 @@ enum class Screen {
     // Authentication Screens
     SignIn,
     CreateAccount,
+    ForgotPassword,
+    ResetPassword,
     NewPassword,
     CompleteProfile,
     OTPVerification,
@@ -166,7 +174,7 @@ fun NavGraph(
         composable(Screen.SignIn.name) {
             SignInScreen(
                 onNavigateToRegister = { navController.navigate(Screen.CreateAccount.name) },
-                onNavigateToForgotPassword = { navController.navigate("${Screen.OTPVerification.name}?fromForgotPassword=true") },
+                onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.name) },
                 onSignInSuccess = { navController.navigateAndClear(Screen.Home.name) }
             )
         }
@@ -180,6 +188,41 @@ fun NavGraph(
                     // Navigate to OTP verification and remove CreateAccount from back stack
                     navController.navigate("${Screen.OTPVerification.name}?fromForgotPassword=false") {
                         popUpTo(Screen.CreateAccount.name) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.ForgotPassword.name) {
+            ForgotPasswordScreen(
+                onBack = { navController.popBackStack() },
+                onResetSent = { 
+                    // Navigate to reset password screen
+                    navController.navigate("${Screen.ResetPassword.name}") {
+                        popUpTo(Screen.ForgotPassword.name) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = "${Screen.ResetPassword.name}?email={email}",
+            arguments = listOf(
+                navArgument("email") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) { backStackEntry ->
+            val email = backStackEntry.arguments?.getString("email") ?: ""
+            
+            ResetPasswordScreen(
+                email = email,
+                onBack = { navController.popBackStack() },
+                onResetSuccess = { 
+                    // Navigate to sign in screen after successful password reset
+                    navController.navigate(Screen.SignIn.name) {
+                        popUpTo(Screen.ResetPassword.name) { inclusive = true }
                     }
                 }
             )
@@ -241,6 +284,7 @@ fun NavGraph(
         ) { backStackEntry ->
             val carId = backStackEntry.arguments?.getString("carId") ?: ""
             CarDetailsScreen(
+                carId = carId,
                 onBackPressed = { navController.popBackStack() },
                 onGalleryClick = { navController.navigate(Screen.Gallery.name) },
                 onBookNowClick = { navController.navigate(Screen.CarBooking.name) }
@@ -248,9 +292,72 @@ fun NavGraph(
         }
 
         composable(Screen.Filter.name) {
+            val homeViewModel = hiltViewModel<com.example.myapplication.ui.screens.home.CarViewModel>()
+            
             Filter(
                 onBackClick = { navController.popBackStack() },
-                onApplyFilters = { 
+                onApplyFilters = { filterParams -> 
+                    // Apply the filters in the view model
+                    Log.d("NavGraph", "Applying filters: $filterParams")
+                    
+                    // Log details about each filter to help debug
+                    if (filterParams.type != null) {
+                        Log.d("NavGraph", "Type filter: ${filterParams.type}")
+                    }
+                    if (filterParams.brand != null) {
+                        Log.d("NavGraph", "Brand filter: ${filterParams.brand}")
+                    }
+                    if (filterParams.minRating > 0) {
+                        Log.d("NavGraph", "Rating filter: ${filterParams.minRating}")
+                    }
+                    Log.d("NavGraph", "Max price: ${filterParams.maxPrice}")
+                    
+                    // Handle different filter combinations
+                    when {
+                        // If we have only a type filter, use the specific type filter method
+                        filterParams.type != null && filterParams.brand == null -> {
+                            Log.d("NavGraph", "Using filterByType with type: '${filterParams.type}'")
+                            homeViewModel.filterByType(filterParams.type)
+                        }
+                        
+                        // If we have only a brand filter, use the specific brand filter method
+                        filterParams.brand != null && filterParams.type == null -> {
+                            Log.d("NavGraph", "Using filterByBrand with brand: '${filterParams.brand}'")
+                            homeViewModel.filterByBrand(filterParams.brand)
+                        }
+                        
+                        // If we have only a rating filter, use the specific rating filter method
+                        filterParams.minRating > 0 && filterParams.type == null && filterParams.brand == null -> {
+                            Log.d("NavGraph", "Using filterByRatingRange with rating: ${filterParams.minRating}")
+                            homeViewModel.filterByRatingRange(
+                                minRating = filterParams.minRating.toLong(),
+                                maxRating = 5
+                            )
+                        }
+                        
+                        // For combinations of filters, use the combined filter method
+                        else -> {
+                            Log.d("NavGraph", "Using loadCarsWithFilters with multiple filters")
+                            Log.d("NavGraph", "  - Type: '${filterParams.type}'")
+                            Log.d("NavGraph", "  - Brand: '${filterParams.brand}'")
+                            Log.d("NavGraph", "  - Rating: ${filterParams.minRating}")
+                            
+                            homeViewModel.loadCarsWithFilters(
+                                brand = filterParams.brand,
+                                model = filterParams.type,
+                                minRating = if (filterParams.minRating > 0) filterParams.minRating.toLong() else null,
+                                maxRating = 5L
+                            )
+                        }
+                    }
+                    
+                    // Navigate back to home screen
+                    navController.popBackStack()
+                },
+                onResetFilters = {
+                    // Reset filters in view model
+                    Log.d("NavGraph", "Resetting filters")
+                    homeViewModel.loadAllCars()
                     navController.popBackStack()
                 }
             )
@@ -299,7 +406,22 @@ fun NavGraph(
         }
 
         composable(Screen.CarBooking.name) {
+            // Create a mock car for now
+            val mockCar = com.example.myapplication.data.model.Car(
+                id = 1,
+                brand = "Toyota",
+                model = "Corolla",
+                year = 2022,
+                rentalPricePerDay = java.math.BigDecimal(55.0),
+                transmission = "Automatic",
+                rating = 4,
+                colour = "White",
+                fuel = "Petrol",
+                type = "Sedan"
+            )
+            
             HomeCarBookingScreen(
+                car = mockCar,
                 onBackPressed = { navController.popBackStack() },
                 onContinue = { navController.navigate(Screen.CompleteYourBooking.name) }
             )

@@ -31,6 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.poppins
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.LaunchedEffect
+import android.util.Log
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,12 +45,85 @@ fun HomeScreen(
     onSignOut: () -> Unit = {},
     onFilterClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
-    onCatalogClick: () -> Unit = {}
+    onCatalogClick: () -> Unit = {},
+    viewModel: CarViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
     val scrollState = rememberScrollState()
     var searchQuery by remember { mutableStateOf("") }
     var expandedBrands by remember { mutableStateOf(false) }
-    var selectedBrand by remember { mutableStateOf("") }
+    var selectedBrand by remember { mutableStateOf("All") }
+    
+    // Collect the UI state from the ViewModel
+    val carUiState by viewModel.uiState.collectAsState()
+    
+    // State for storing the cars to display
+    var cars by remember { mutableStateOf<List<com.example.myapplication.data.model.Car>>(emptyList()) }
+    
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
+    // Use LaunchedEffect to show Toast in a Composable context
+    LaunchedEffect(carUiState) {
+        when (carUiState) {
+            is CarUiState.Error -> {
+                android.widget.Toast.makeText(
+                    context,
+                    (carUiState as CarUiState.Error).message,
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+            else -> {}
+        }
+    }
+    
+    // Handle changes to UI state
+    LaunchedEffect(carUiState) {
+        when (carUiState) {
+            is CarUiState.Success -> {
+                cars = (carUiState as CarUiState.Success).cars
+            }
+            is CarUiState.PaginatedSuccess -> {
+                val pagedResponse = (carUiState as CarUiState.PaginatedSuccess).pagedResponse
+                cars = pagedResponse.content
+            }
+            else -> {}
+        }
+    }
+    
+    // Handle brand selection
+    LaunchedEffect(selectedBrand) {
+        if (selectedBrand == "All") {
+            viewModel.loadAllCars()
+        } else {
+            viewModel.filterByBrand(selectedBrand)
+        }
+    }
+    
+    // Search handling
+    var debouncedSearchQuery by remember { mutableStateOf("") }
+    LaunchedEffect(searchQuery) {
+        // Shorter debounce delay for better responsiveness
+        kotlinx.coroutines.delay(300) // Debounce delay
+        debouncedSearchQuery = searchQuery
+        
+        // Add debug output
+        Log.d("HomeScreen", "Search query: '$searchQuery'")
+    }
+    
+    LaunchedEffect(debouncedSearchQuery) {
+        if (debouncedSearchQuery.isNotBlank()) {
+            // Apply search filter using the view model
+            Log.d("HomeScreen", "Filtering by model/brand: '$debouncedSearchQuery'")
+            viewModel.filterByModel(debouncedSearchQuery)
+        } else if (selectedBrand == "All") {
+            // If search is empty and no brand filter, load all cars
+            Log.d("HomeScreen", "Loading all cars (no search, no brand filter)")
+            viewModel.loadAllCars()
+        } else {
+            // If search is empty but brand is selected, apply brand filter
+            Log.d("HomeScreen", "Filtering by brand: '$selectedBrand'")
+            viewModel.filterByBrand(selectedBrand)
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -115,7 +191,9 @@ fun HomeScreen(
                 // Search Field
                 TextField(
                     value = searchQuery,
-                    onValueChange = { searchQuery = it },
+                    onValueChange = { 
+                        searchQuery = it
+                    },
                     placeholder = {
                         Text(
                             "Search any car...",
@@ -133,6 +211,20 @@ fun HomeScreen(
                             tint = Color.Black,
                             modifier = Modifier.size(25.dp)
                         )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { 
+                                searchQuery = ""
+                                viewModel.loadAllCars()
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = "Clear Search",
+                                    tint = Color.Gray
+                                )
+                            }
+                        }
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -242,69 +334,118 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Top Rated Cars
-            Text(
-                text = "Top Rated Cars",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.Black,
-                modifier = Modifier.padding(horizontal = 20.dp)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Horizontal Car Cards
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                items(3) { index ->
-                    val images = listOf(
-                        R.drawable.ic_launcher_background,
-                        R.drawable.ic_launcher_background,
-                        R.drawable.ic_launcher_background
-                    )
-
-                    TopRatedCarCard(
-                        carName = "Toyota RAV4 2024",
-                        price = "00.00DA/day",
-                        rating = 4.9f,
-                        imageRes = images[index],
-                        onClick = { onCarClick("Toyota RAV4 2024") }
+                Text(
+                    text = "Top Rated Cars",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
+                )
+                
+                if (carUiState is CarUiState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color(0xFF149459),
+                        strokeWidth = 2.dp
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Most Popular Car
-            Text(
-                text = "Most Popular Car",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.Black,
-                modifier = Modifier.padding(horizontal = 20.dp)
-            )
-
+            
             Spacer(modifier = Modifier.height(12.dp))
-
-            // Multiple Most Popular Cars
-            val popularCars = listOf(
-                Triple("Toyota RAV4 2024", "00.00DA/day", R.drawable.ic_launcher_background),
-                Triple("Audi RS e-tron GT", "00.00DA/day", R.drawable.ic_launcher_background),
-                Triple("Mercedes AMG GT", "00.00DA/day", R.drawable.ic_launcher_background),
-                Triple("BMW i7 2024", "00.00DA/day", R.drawable.ic_launcher_background)
-            )
-
-            popularCars.forEach { (carName, price, imageRes) ->
-                MostPopularCarCard(
-                    carName = carName,
-                    price = price,
-                    rating = 4.9f,
-                    imageRes = imageRes,
-                    onClick = { onCarClick(carName) }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
+            
+            // Show loading or error state
+            when (carUiState) {
+                is CarUiState.Loading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color(0xFF149459)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Loading cars...",
+                                fontFamily = poppins,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                }
+                is CarUiState.Error -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Error,
+                                contentDescription = "Error",
+                                tint = Color.Red,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = (carUiState as CarUiState.Error).message,
+                                fontFamily = poppins,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Red
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(
+                                onClick = { 
+                                    if (selectedBrand == "All") {
+                                        viewModel.loadAllCars()
+                                    } else {
+                                        viewModel.filterByBrand(selectedBrand)
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF149459)
+                                )
+                            ) {
+                                Text("Retry")
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    // Display cars if we have them
+                    if (cars.isNotEmpty()) {
+                        CarListSection(cars, onCarClick)
+                    } else {
+                        // No cars found
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No cars found",
+                                fontFamily = poppins,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -372,124 +513,9 @@ fun CarBrandItem(
 }
 
 @Composable
-fun TopRatedCarCard(
-    carName: String,
-    price: String,
-    rating: Float,
-    imageRes: Int,
-    onClick: () -> Unit = {}
-) {
-    // State to track if this car is favorited
-    var isFavorite by remember { mutableStateOf(false) }
-    
-    Card(
-        modifier = Modifier
-            .width(160.dp)
-            .height(140.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Car Image
-            Image(
-                painter = painterResource(id = imageRes),
-                contentDescription = carName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            // Rating Badge
-            Box(
-                modifier = Modifier
-                    .padding(6.dp)
-                    .align(Alignment.TopStart)
-            ) {
-                Card(
-                    shape = RoundedCornerShape(10.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 0.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.green_star),
-                            contentDescription = "Rating",
-                            tint = Color(0xFF149459),
-                            modifier = Modifier.size(12.dp)
-                        )
-
-                        Spacer(modifier = Modifier.width(2.dp))
-
-                        Text(
-                            text = rating.toString(),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.Black
-                        )
-                    }
-                }
-            }
-
-            // Favorite Button
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(6.dp)
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(Color.White)
-                    .clickable { isFavorite = !isFavorite }
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.heart),
-                    contentDescription = "Add to favorites",
-                    tint = if (isFavorite) Color(0xFFFF4444) else Color.Gray,
-                    modifier = Modifier
-                        .size(14.dp)
-                        .align(Alignment.Center)
-                )
-            }
-
-            // Car name and price - overlay at bottom
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
-            ) {
-                Text(
-                    text = carName,
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = price,
-                    color = Color.White,
-                    fontSize = 10.sp,
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.Normal
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun MostPopularCarCard(
-    carName: String,
-    price: String,
-    rating: Float,
-    imageRes: Int,
-    onClick: () -> Unit = {}
+fun CarItem(
+    car: com.example.myapplication.data.model.Car,
+    onClick: () -> Unit
 ) {
     // State to track if this car is favorited
     var isFavorite by remember { mutableStateOf(false) }
@@ -497,15 +523,15 @@ fun MostPopularCarCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 20.dp, vertical = 8.dp)
             .clickable(onClick = onClick)
     ) {
         // Outer white card containing everything
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(5.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -516,49 +542,49 @@ fun MostPopularCarCard(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(160.dp),
-                    shape = RoundedCornerShape(5.dp),
+                        .height(180.dp),
+                    shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Box(
                         modifier = Modifier.fillMaxSize()
                     ) {
+                        // If car image URL is available, load it using Coil
+                        // For now, we'll use a placeholder
                         Image(
-                            painter = painterResource(id = imageRes),
-                            contentDescription = carName,
-                            contentScale = ContentScale.FillBounds,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .fillMaxHeight()
+                            painter = painterResource(id = R.drawable.car_placeholder),
+                            contentDescription = "${car.brand} ${car.model}",
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize()
                         )
 
                         // Rating Badge
                         Box(
                             modifier = Modifier
-                                .padding(start = 8.dp, top = 8.dp)
+                                .padding(start = 12.dp, top = 12.dp)
                                 .align(Alignment.TopStart)
                         ) {
                             Card(
-                                shape = RoundedCornerShape(5.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 3.dp, vertical = 0.dp),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
-                                        painter = painterResource(id = R.drawable.green_star),
+                                        imageVector = Icons.Filled.Star,
                                         contentDescription = "Rating",
-                                        tint = Color(0xFF149459),
+                                        tint = Color(0xFFFFC107),
                                         modifier = Modifier.size(16.dp)
                                     )
 
                                     Spacer(modifier = Modifier.width(4.dp))
 
                                     Text(
-                                        text = "4.9",
-                                        fontSize = 15.sp,
+                                        text = car.rating.toString(),
+                                        fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.Black
                                     )
@@ -569,26 +595,25 @@ fun MostPopularCarCard(
                         // Heart Icon - Now clickable
                         Box(
                             modifier = Modifier
-                                .padding(end = 12.dp, top = 8.dp)
+                                .padding(end = 12.dp, top = 12.dp)
                                 .align(Alignment.TopEnd)
-                                .size(32.dp)
+                                .size(36.dp)
                                 .clip(CircleShape)
                                 .background(Color.White)
                                 .clickable { isFavorite = !isFavorite }
+                                .padding(8.dp)
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.heart),
-                                contentDescription = "Add to favorites",
+                                imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
                                 tint = if (isFavorite) Color(0xFFFF4444) else Color.Gray,
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .align(Alignment.Center)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(30.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Car Title and Price
                 Row(
@@ -598,57 +623,72 @@ fun MostPopularCarCard(
                 ) {
                     // Car Name
                     Text(
-                        text = "Toyota RAV4 2024",
+                        text = "${car.brand} ${car.model}",
                         fontSize = 18.sp,
-                        fontFamily = poppins,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.Black,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
                     )
 
                     // Price
                     Text(
-                        text = "00.00DA/day",
-                        fontSize = 15.sp,
-                        fontFamily = poppins,
-                        fontWeight = FontWeight.Normal,
-                        color = Color.Black.copy(alpha = 0.6f)
+                        text = "${car.rentalPricePerDay}DA / day",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF149459)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // Add divider here
                 Divider(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     thickness = 1.dp,
                     color = Color.Gray.copy(alpha = 0.3f)
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // Feature Icons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                ) {
+                    // Type
+                    FeatureItem(
+                        icon = Icons.Outlined.Settings,
+                        text = car.type
+                    )
+                    
+                    // Transmission
+                    FeatureItem(
+                        icon = Icons.Outlined.Speed,
+                        text = car.transmission
+                    )
+                    
+                    // Fuel
+                    FeatureItem(
+                        icon = Icons.Outlined.LocalGasStation,
+                        text = car.fuel
+                    )
+                }
 
-                    ) {
-                    // Manual
-                    FeatureItem(
-                        iconRes = R.drawable.manual,
-                        text = "Manual"
-                    )
-                    Spacer(modifier = Modifier.width(40.dp))
-                    // Petrol
-                    FeatureItem(
-                        iconRes = R.drawable.petrol,
-                        text = "Petrol"
-                    )
-                    Spacer(modifier = Modifier.width(40.dp))
-                    // Seat
-                    FeatureItem(
-                        iconRes = R.drawable.seat,
-                        text = "Seat"
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Book button
+                Button(
+                    onClick = onClick,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF149459)
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Book Now",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
                 }
             }
@@ -658,61 +698,26 @@ fun MostPopularCarCard(
 
 @Composable
 fun FeatureItem(
-    iconRes: Int,
-    text: String,
-    modifier: Modifier = Modifier
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String
 ) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            painter = painterResource(id = iconRes),
+            imageVector = icon,
             contentDescription = text,
             tint = Color(0xFF149459),
-            modifier = Modifier.size(25.dp)
+            modifier = Modifier.size(24.dp)
         )
-
-        Spacer(modifier = Modifier.width(6.dp))
-
+        
+        Spacer(modifier = Modifier.height(4.dp))
+        
         Text(
             text = text,
-            fontSize = 17.sp,
-            fontFamily = poppins,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
-            color = Color.Black
-        )
-    }
-}
-
-@Composable
-fun CarFeatureTag(
-    modifier: Modifier = Modifier,
-    iconRes: Int,
-    text: String,
-    iconTint: Color = Color(0xFF149459),
-    textColor: Color = Color.Black
-) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            painter = painterResource(id = iconRes),
-            contentDescription = text,
-            tint = iconTint,
-            modifier = Modifier.size(32.dp)
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        Text(
-            text = text,
-            fontSize = 20.sp,
-            fontFamily = poppins,
-            fontWeight = FontWeight.SemiBold,
-            color = textColor
+            color = Color.Gray
         )
     }
 }
@@ -812,6 +817,17 @@ fun BottomNavItem(
                 fontFamily = poppins
             )
         )
+    }
+}
+
+@Composable
+fun CarListSection(cars: List<com.example.myapplication.data.model.Car>, onCarClick: (String) -> Unit = {}) {
+    cars.forEach { car ->
+        CarItem(
+            car = car,
+            onClick = { onCarClick(car.id.toString()) }
+        )
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 

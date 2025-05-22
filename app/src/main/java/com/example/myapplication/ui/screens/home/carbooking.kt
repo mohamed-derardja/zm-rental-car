@@ -5,8 +5,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -15,15 +18,30 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
-import com.example.myapplication.ui.theme.poppins
+import com.example.myapplication.data.model.Car
+import java.math.BigDecimal
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CarBookingScreen(
+    car: Car,
     onBackPressed: () -> Unit = {},
     onContinue: () -> Unit = {}
 ) {
-    var rentType by remember { mutableStateOf("Self-Driver") }
+    // Define booking state variables
+    val pickupDate = remember { mutableStateOf(LocalDate.now()) }
+    val dropoffDate = remember { mutableStateOf(LocalDate.now().plusDays(3)) }
+    
+    // Calculate formatted dates and number of days
+    val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy")
+    val formattedPickupDate = pickupDate.value.format(formatter)
+    val formattedDropoffDate = dropoffDate.value.format(formatter)
+    val numDays = ChronoUnit.DAYS.between(pickupDate.value, dropoffDate.value).toInt()
+    
+    // Get existing variables from existing code if needed
     var pickUpDate by remember { mutableStateOf("Date") }
     var pickUpTime by remember { mutableStateOf("Time") }
     var dropOffDate by remember { mutableStateOf("Date") }
@@ -32,211 +50,219 @@ fun CarBookingScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF2F5FA))
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
         ) {
-            // Reuse TopImageSection from CarDetailsScreen, but with title 'Car Booking' and no favorite
-            TopImageSection(
-                isFavorite = false,
-                onFavoriteClick = {},
-                onBackPressed = onBackPressed,
-                title = "Car Booking",
-                showFavorite = false
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            // Car Info
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 18.dp)
+            // Booking header with back button
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                CarTagAndRating()
-                CarNameSection()
-            }
-            Divider(color = Color.Black, thickness = 1.dp)
-            Spacer(modifier = Modifier.height(10.dp))
-            // Rent Type
-            Column(modifier = Modifier.padding(horizontal = 18.dp)) {
-                Text(
-                    text = "Rent type",
-                    fontSize = 17.sp,
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Black
-                )
-                Spacer(modifier = Modifier.height(5.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(25.dp)
-                ) {
-                    Button(
-                        onClick = { rentType = "Self-Driver" },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (rentType == "Self-Driver") Color(0xFF149459) else Color.White,
-                            contentColor = if (rentType == "Self-Driver") Color.White else Color.Black
-                        ),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Self-Driver",fontSize = 16.sp , fontFamily = poppins, fontWeight = FontWeight.SemiBold)
-                    }
-                    Button(
-                        onClick = { rentType = "With Driver" },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (rentType == "With Driver") Color(0xFF149459) else Color.White,
-                            contentColor = if (rentType == "With Driver") Color.White else Color.Black
-                        ),
-                        shape = RoundedCornerShape(30.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("With Driver", fontSize = 16.sp , fontFamily = poppins, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-                if (rentType == "With Driver") {
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.White, RoundedCornerShape(10.dp))
-                            .padding(8.dp)
-                    ) {
-                        Text(
-                            text = "Additional 00.00DA Driver Cost if you Choose With Driver Option",
-                            fontSize = 13.sp,
-                            fontFamily = poppins,
-                            color = Color.Black.copy(alpha = 0.7f)
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            // Pick-up and Drop-off
-            Column(modifier = Modifier.padding(horizontal = 18.dp)) {
-                Text(
-                    text = "Pick-up date and time",
-                    fontSize = 17.sp,
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Black
-                )
-                Spacer(modifier = Modifier.height(5.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(25.dp)
-                ) {
-                    Button(
-                        onClick = { /* TODO: Show date picker */ },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.calendar),
-                            contentDescription = "Date",
-                            tint = Color.Black,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(pickUpDate,fontSize = 16.sp , color = Color.Black, fontFamily = poppins, fontWeight = FontWeight.SemiBold)
-                    }
-                    Button(
-                        onClick = { /* TODO: Show time picker */ },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.timepick),
-                            contentDescription = "Time",
-                            tint = Color.Black,
-                            modifier = Modifier.size(25.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(pickUpTime,fontSize = 16.sp , color = Color.Black, fontFamily = poppins, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "Drop-off date and time",
-                    fontSize = 17.sp,
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Black
-                )
-                Spacer(modifier = Modifier.height(5.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(25.dp)
-                ) {
-                    Button(
-                        onClick = { /* TODO: Show date picker */ },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.calendar),
-                            contentDescription = "Date",
-                            tint = Color.Black,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(dropOffDate,fontSize = 16.sp , color = Color.Black, fontFamily = poppins, fontWeight = FontWeight.SemiBold)
-                    }
-                    Button(
-                        onClick = { /* TODO: Show time picker */ },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.timepick),
-                            contentDescription = "Time",
-                            tint = Color.Black,
-                            modifier = Modifier.size(25.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(dropOffTime,fontSize = 16.sp , color = Color.Black, fontFamily = poppins, fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(25.dp))
-            // Continue Button
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 18.dp)
-            ) {
-                Button(
-                    onClick = { onContinue() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(40.dp),
-                    shape = RoundedCornerShape(30.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF149459))
-                ) {
-                    Text(
-                        text = "Continue",
-                        fontSize = 18.sp,
-                        fontFamily = poppins,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
+                IconButton(onClick = onBackPressed) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back"
                     )
                 }
+                Text(
+                    text = "Book Your Car",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
-            Spacer(modifier = Modifier.height(20.dp))
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Display booking summary
+            BookingSummarySection(
+                carModel = car.model,
+                carBrand = car.brand,
+                carPrice = car.rentalPricePerDay.toDouble(),
+                pickupDate = formattedPickupDate,
+                dropoffDate = formattedDropoffDate,
+                numDays = numDays,
+                transmission = car.transmission,
+                rating = car.rating,
+                carName = "${car.brand} ${car.model}",
+                year = car.year
+            )
+            
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // Continue button
+            Button(
+                onClick = onContinue,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Continue to Payment",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun BookingSummarySection(
+    modifier: Modifier = Modifier,
+    carModel: String,
+    carBrand: String,
+    carPrice: Double,
+    pickupDate: String,
+    dropoffDate: String,
+    numDays: Int,
+    transmission: String,
+    rating: Long,
+    carName: String,
+    year: Long
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Booking Summary",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Car details
+            Text(
+                text = "$carBrand $carModel",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            
+            Text(
+                text = "Year: $year | $transmission | Rating: $rating",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray
+            )
+            
+            Divider(modifier = Modifier.padding(vertical = 16.dp))
+            
+            // Booking period
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "Pickup Date",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = pickupDate,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                
+                Column {
+                    Text(
+                        text = "Dropoff Date",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                    Text(
+                        text = dropoffDate,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+            
+            Divider(modifier = Modifier.padding(vertical = 16.dp))
+            
+            // Price calculation
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Daily Rate",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "$$carPrice",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Number of Days",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "$numDays days",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Divider()
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Total",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "$${carPrice * numDays}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+@Preview
 @Composable
 fun CarBookingScreenPreview() {
     CarBookingScreen(
+        car = Car(
+            id = 1,
+            brand = "Toyota",
+            model = "Corolla",
+            year = 2020,
+            rentalPricePerDay = BigDecimal(50),
+            transmission = "Automatic",
+            rating = 4
+        ),
         onBackPressed = {},
         onContinue = {}
     )

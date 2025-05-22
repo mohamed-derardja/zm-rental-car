@@ -523,41 +523,39 @@ fun CreateAccountScreen(
             }
             
             Spacer(modifier = Modifier.height(15.dp))
+            // Create Account Button
             Button(
-                onClick = { 
+                onClick = {
                     if (validateForm()) {
-                        Log.d("CreateAccountScreen", "Create button clicked, validating form passed")
-                        // Give immediate UI feedback with toast or snackbar
-                        android.widget.Toast.makeText(
-                            context,
-                            "Creating account...",
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
-                        viewModel.register(name, email, password)
-                    } else {
-                        Log.d("CreateAccountScreen", "Form validation failed")
+                        // Only attempt registration if all validations pass
+                        viewModel.register(name, email, password, "")
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF149459)),
-                shape = RoundedCornerShape(16.dp),
+                enabled = uiState !is AuthUiState.Loading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(60.dp)
+                    .padding(vertical = 8.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF149459),
+                    contentColor = Color.White
+                )
             ) {
                 if (uiState is AuthUiState.Loading) {
                     CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
                         color = Color.White,
-                        modifier = Modifier.size(24.dp)
+                        strokeWidth = 2.dp
                     )
                 } else {
-                Text(
-                    "Create",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.08.sp
-                )
+                    Text(
+                        text = "Create Account",
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
+                        letterSpacing = 0.08.sp
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))

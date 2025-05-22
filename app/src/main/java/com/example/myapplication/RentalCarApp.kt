@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.StrictMode
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.example.myapplication.data.preference.AuthPreferenceManager
 import com.example.myapplication.utils.PreferenceManager
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
@@ -18,6 +19,9 @@ class RentalCarApp : Application(), Configuration.Provider {
     
     @Inject
     lateinit var preferenceManager: PreferenceManager
+    
+    @Inject
+    lateinit var authPreferenceManager: AuthPreferenceManager
     
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
@@ -43,8 +47,28 @@ class RentalCarApp : Application(), Configuration.Provider {
         // Initialize any third-party libraries here
         // FirebaseApp.initializeApp(this)
         
+        // Check if we need to migrate data from old preferences to new auth preferences
+        migratePreferencesToAuth()
+        
         // No need to manually initialize WorkManager when implementing Configuration.Provider
         // WorkManager will be initialized automatically using getWorkManagerConfiguration()
+    }
+    
+    private fun migratePreferencesToAuth() {
+        // If user is logged in with old preference system, migrate to new auth system
+        if (preferenceManager.isLoggedIn && !authPreferenceManager.isLoggedIn()) {
+            preferenceManager.authToken?.let { token ->
+                authPreferenceManager.saveAuthToken(token)
+                preferenceManager.userId?.let { userId ->
+                    authPreferenceManager.saveUserId(userId)
+                }
+                authPreferenceManager.setLoggedIn(true)
+                // Set a default expiry time (1 day)
+                authPreferenceManager.saveTokenExpiry(86400)
+                
+                Timber.d("Migrated user authentication from old preferences to secure storage")
+            }
+        }
     }
     
     private fun enableStrictMode() {

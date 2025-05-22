@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.api.ApiStatus
 import com.example.myapplication.data.auth.FacebookAuthHelper
 import com.example.myapplication.data.auth.GoogleAuthHelper
 import com.example.myapplication.data.repository.AuthRepository
@@ -18,6 +19,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -51,6 +53,11 @@ class AuthViewModel @Inject constructor(
 
     init {
         initializeAuthHelpers()
+        
+        // Check if user is already logged in
+        if (authRepository.isLoggedIn()) {
+            _uiState.value = AuthUiState.Success("auto_login")
+        }
     }
 
     private fun initializeAuthHelpers() {
@@ -91,26 +98,91 @@ class AuthViewModel @Inject constructor(
             return
         }
 
+        Log.d(TAG, "Starting login process for email: $email")
         viewModelScope.launch {
-            try {
-                _uiState.value = AuthUiState.Loading
-                val result = authRepository.login(email, password)
-                result.onSuccess { user ->
-                    // Save user data to preferences
-                    preferenceManager.userName = user.name
-                    preferenceManager.userEmail = user.email
-                    preferenceManager.isLoggedIn = true
-                    preferenceManager.userId = user.id.toString()
-                    
-                    _uiState.value = AuthUiState.Success("email_${user.id}")
-                    Log.d(TAG, "User logged in successfully: ${user.name}")
-                }.onFailure { exception ->
-                    _uiState.value = AuthUiState.Error(exception.message ?: "Authentication failed")
-                    Log.e(TAG, "Login failed", exception)
+            _uiState.value = AuthUiState.Loading
+            Log.d(TAG, "Set UI state to Loading")
+            
+            authRepository.login(email, password).collectLatest { result ->
+                Log.d(TAG, "Received login result with status: ${result.status}")
+                when (result.status) {
+                    ApiStatus.SUCCESS -> {
+                        result.data?.let { responseData ->
+                            Log.d(TAG, "Login successful, response data type: ${responseData::class.java.name}")
+                            // Handle different possible response formats
+                            val userId = when (responseData) {
+                                is com.example.myapplication.data.api.AuthResponse -> {
+                                    Log.d(TAG, "Response is AuthResponse type with id: ${responseData.id}")
+                                    responseData.id.toString()
+                                }
+                                is Map<*, *> -> {
+                                    val id = (responseData["userId"] ?: responseData["id"])?.toString() ?: "unknown"
+                                    Log.d(TAG, "Response is Map type with userId/id: $id")
+                                    id
+                                }
+                                else -> {
+                                    // Use reflection to try to access properties
+                                    try {
+                                        val userIdField = responseData.javaClass.getDeclaredField("userId")
+                                        userIdField.isAccessible = true
+                                        val id = userIdField.get(responseData)?.toString() ?: "unknown"
+                                        Log.d(TAG, "Response is other type with reflected userId: $id")
+                                        id
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Failed to get userId via reflection", e)
+                                        "unknown"
+                                    }
+                                }
+                            }
+                            
+                            val token = when (responseData) {
+                                is com.example.myapplication.data.api.AuthResponse -> {
+                                    Log.d(TAG, "Got token from AuthResponse: ${responseData.token.take(10)}...")
+                                    responseData.token
+                                }
+                                is Map<*, *> -> {
+                                    val tokenStr = responseData["token"]?.toString() ?: ""
+                                    Log.d(TAG, "Got token from Map: ${tokenStr.take(10.coerceAtMost(tokenStr.length))}...")
+                                    tokenStr
+                                }
+                                else -> {
+                                    // Use reflection to try to access properties
+                                    try {
+                                        val tokenField = responseData.javaClass.getDeclaredField("token")
+                                        tokenField.isAccessible = true
+                                        val tokenStr = tokenField.get(responseData)?.toString() ?: ""
+                                        Log.d(TAG, "Got token via reflection: ${tokenStr.take(10.coerceAtMost(tokenStr.length))}...")
+                                        tokenStr
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Failed to get token via reflection", e)
+                                        ""
+                                    }
+                                }
+                            }
+                            
+                            // Old preference manager for backward compatibility
+                            preferenceManager.userEmail = email
+                            preferenceManager.isLoggedIn = true
+                            preferenceManager.userId = userId
+                            preferenceManager.authToken = token
+                            
+                            Log.d(TAG, "Saved to preferences - userId: $userId, isLoggedIn: true")
+                            _uiState.value = AuthUiState.Success("email_$userId")
+                            Log.d(TAG, "Set UI state to Success with value: email_$userId")
+                        } ?: run {
+                            Log.e(TAG, "Login succeeded but response data is null")
+                            _uiState.value = AuthUiState.Error("Login succeeded but no user data returned")
+                        }
+                    }
+                    ApiStatus.ERROR -> {
+                        Log.e(TAG, "Login API error: ${result.message}")
+                        _uiState.value = AuthUiState.Error(result.message ?: "Login failed")
+                    }
+                    ApiStatus.LOADING -> {
+                        // Already set loading state above
+                        Log.d(TAG, "Login API status is still loading")
+                    }
                 }
-            } catch (e: Exception) {
-                _uiState.value = AuthUiState.Error(e.message ?: "An unknown error occurred")
-                Log.e(TAG, "Error during email authentication", e)
             }
         }
     }
@@ -118,46 +190,102 @@ class AuthViewModel @Inject constructor(
     /**
      * Handle user registration with name, email and password
      */
-    fun register(name: String, email: String, password: String) {
+    fun register(name: String, email: String, password: String, phone: String = "") {
         if (name.isBlank() || email.isBlank() || password.isBlank()) {
             _uiState.value = AuthUiState.Error("All fields are required")
             return
         }
 
         viewModelScope.launch {
-            try {
-                _uiState.value = AuthUiState.Loading
-                
-                // Save user name to preferences for profile display
-                preferenceManager.userName = name
-                preferenceManager.userEmail = email
-                preferenceManager.isLoggedIn = true
-                preferenceManager.userId = "mock_user_id"
-                
-                // TEMPORARY SOLUTION: Bypass actual API call for testing navigation
-                // This will let us test the OTP verification flow without a working backend
-                _uiState.value = AuthUiState.Success("mock_registration_token")
-                Log.d(TAG, "Mock registration successful for: $name, $email")
-                
-                /* Commented out for now to fix navigation
-                val result = authRepository.register(name, email, password, "") // Empty phone for now
-                result.onSuccess { user ->
-                    _uiState.value = AuthUiState.Success("email_${user.id}")
-                    Log.d(TAG, "User registered successfully: ${user.name}")
-                }.onFailure { exception ->
-                    _uiState.value = AuthUiState.Error(exception.message ?: "Registration failed")
-                    Log.e(TAG, "Registration failed", exception)
+            _uiState.value = AuthUiState.Loading
+            
+            authRepository.register(name, email, password, phone).collectLatest { result ->
+                when (result.status) {
+                    ApiStatus.SUCCESS -> {
+                        result.data?.let { responseData ->
+                            // Handle different possible response formats
+                            val userId = when (responseData) {
+                                is com.example.myapplication.data.api.AuthResponse -> responseData.id.toString()
+                                is Map<*, *> -> (responseData["userId"] ?: responseData["id"])?.toString() ?: "unknown"
+                                else -> {
+                                    // Use reflection to try to access properties
+                                    try {
+                                        val userIdField = responseData.javaClass.getDeclaredField("userId")
+                                        userIdField.isAccessible = true
+                                        userIdField.get(responseData)?.toString() ?: "unknown"
+                                    } catch (e: Exception) {
+                                        "unknown"
+                                    }
+                                }
+                            }
+                            
+                            val token = when (responseData) {
+                                is com.example.myapplication.data.api.AuthResponse -> responseData.token
+                                is Map<*, *> -> responseData["token"]?.toString() ?: ""
+                                else -> {
+                                    // Use reflection to try to access properties
+                                    try {
+                                        val tokenField = responseData.javaClass.getDeclaredField("token")
+                                        tokenField.isAccessible = true
+                                        tokenField.get(responseData)?.toString() ?: ""
+                                    } catch (e: Exception) {
+                                        ""
+                                    }
+                                }
+                            }
+                            
+                            // Old preference manager for backward compatibility
+                            preferenceManager.userName = name
+                            preferenceManager.userEmail = email
+                            preferenceManager.isLoggedIn = true
+                            preferenceManager.userId = userId
+                            preferenceManager.authToken = token
+                            
+                            _uiState.value = AuthUiState.Success("email_$userId")
+                            Log.d(TAG, "User registered successfully: ID $userId")
+                        } ?: run {
+                            _uiState.value = AuthUiState.Error("Registration succeeded but no user data returned")
+                        }
+                    }
+                    ApiStatus.ERROR -> {
+                        _uiState.value = AuthUiState.Error(result.message ?: "Registration failed")
+                        Log.e(TAG, "Registration failed: ${result.message}")
+                    }
+                    ApiStatus.LOADING -> {
+                        // Already set loading state above
+                    }
                 }
-                */
-            } catch (e: Exception) {
-                // Even with an exception, we'll still navigate to OTP screen for testing
-                // Save user name to preferences for profile display
-                preferenceManager.userName = name
-                preferenceManager.userEmail = email
-                preferenceManager.isLoggedIn = true
-                
-                _uiState.value = AuthUiState.Success("mock_registration_token")
-                Log.e(TAG, "Error during registration but proceeding for testing", e)
+            }
+        }
+    }
+
+    /**
+     * Check if an email exists in the system
+     */
+    fun checkEmailExists(email: String, onResult: (Boolean) -> Unit) {
+        if (email.isBlank()) {
+            onResult(false)
+            return
+        }
+        
+        viewModelScope.launch {
+            authRepository.checkEmailExists(email).collectLatest { result ->
+                when (result.status) {
+                    ApiStatus.SUCCESS -> {
+                        result.data?.let { exists ->
+                            onResult(exists)
+                        } ?: run {
+                            onResult(false)
+                        }
+                    }
+                    ApiStatus.ERROR -> {
+                        onResult(false)
+                        Log.e(TAG, "Email check failed: ${result.message}")
+                    }
+                    ApiStatus.LOADING -> {
+                        // Do nothing while loading
+                    }
+                }
             }
         }
     }
@@ -238,19 +366,49 @@ class AuthViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            
             try {
-                _uiState.value = AuthUiState.Loading
-                val result = authRepository.loginWithFacebook(token)
-                result.onSuccess { user ->
-                    _uiState.value = AuthUiState.Success("fb_$token")
-                    Log.d(TAG, "User logged in successfully: ${user.name}")
-                }.onFailure { exception ->
-                    _uiState.value = AuthUiState.Error(exception.message ?: "Authentication failed")
-                    Log.e(TAG, "Login failed", exception)
+                // Attempt to use loginWithFacebook method if it exists
+                authRepository.loginWithFacebook(token).collectLatest { result ->
+                    when (result.status) {
+                        ApiStatus.SUCCESS -> {
+                            result.data?.let { responseData ->
+                                // Handle different possible response formats
+                                val userId = when (responseData) {
+                                    is com.example.myapplication.data.api.AuthResponse -> responseData.id.toString()
+                                    is Map<*, *> -> (responseData["userId"] ?: responseData["id"])?.toString() ?: "unknown"
+                                    else -> {
+                                        // Use reflection to try to access properties
+                                        try {
+                                            val userIdField = responseData.javaClass.getDeclaredField("userId")
+                                            userIdField.isAccessible = true
+                                            userIdField.get(responseData)?.toString() ?: "unknown"
+                                        } catch (e: Exception) {
+                                            "unknown"
+                                        }
+                                    }
+                                }
+                                
+                                _uiState.value = AuthUiState.Success("fb_$userId")
+                                Log.d(TAG, "User logged in with Facebook successfully: ID $userId")
+                            } ?: run {
+                                _uiState.value = AuthUiState.Error("Facebook login succeeded but no user data returned")
+                            }
+                        }
+                        ApiStatus.ERROR -> {
+                            _uiState.value = AuthUiState.Error(result.message ?: "Facebook login failed")
+                            Log.e(TAG, "Facebook login failed: ${result.message}")
+                        }
+                        ApiStatus.LOADING -> {
+                            // Already set loading state above
+                        }
+                    }
                 }
             } catch (e: Exception) {
-                _uiState.value = AuthUiState.Error(e.message ?: "An unknown error occurred")
-                Log.e(TAG, "Error during Facebook authentication", e)
+                // If the method doesn't exist, fallback to a generic error message
+                _uiState.value = AuthUiState.Error("Facebook login is not implemented yet")
+                Log.e(TAG, "Facebook login method not available", e)
             }
         }
     }
@@ -265,103 +423,128 @@ class AuthViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            
             try {
-                _uiState.value = AuthUiState.Loading
-                val result = authRepository.loginWithGoogle(token)
-                result.onSuccess { user ->
-                    _uiState.value = AuthUiState.Success("google_$token")
-                    Log.d(TAG, "User logged in successfully: ${user.name}")
-                }.onFailure { exception ->
-                    _uiState.value = AuthUiState.Error(exception.message ?: "Authentication failed")
-                    Log.e(TAG, "Login failed", exception)
+                // Attempt to use loginWithGoogle method if it exists
+                authRepository.loginWithGoogle(token).collectLatest { result ->
+                    when (result.status) {
+                        ApiStatus.SUCCESS -> {
+                            result.data?.let { responseData ->
+                                // Handle different possible response formats
+                                val userId = when (responseData) {
+                                    is com.example.myapplication.data.api.AuthResponse -> responseData.id.toString()
+                                    is Map<*, *> -> (responseData["userId"] ?: responseData["id"])?.toString() ?: "unknown"
+                                    else -> {
+                                        // Use reflection to try to access properties
+                                        try {
+                                            val userIdField = responseData.javaClass.getDeclaredField("userId")
+                                            userIdField.isAccessible = true
+                                            userIdField.get(responseData)?.toString() ?: "unknown"
+                                        } catch (e: Exception) {
+                                            "unknown"
+                                        }
+                                    }
+                                }
+                                
+                                _uiState.value = AuthUiState.Success("google_$userId")
+                                Log.d(TAG, "User logged in with Google successfully: ID $userId")
+                            } ?: run {
+                                _uiState.value = AuthUiState.Error("Google login succeeded but no user data returned")
+                            }
+                        }
+                        ApiStatus.ERROR -> {
+                            _uiState.value = AuthUiState.Error(result.message ?: "Google login failed")
+                            Log.e(TAG, "Google login failed: ${result.message}")
+                        }
+                        ApiStatus.LOADING -> {
+                            // Already set loading state above
+                        }
+                    }
                 }
             } catch (e: Exception) {
-                _uiState.value = AuthUiState.Error(e.message ?: "An unknown error occurred")
-                Log.e(TAG, "Error during Google authentication", e)
+                // If the method doesn't exist, fallback to a generic error message
+                _uiState.value = AuthUiState.Error("Google login is not implemented yet")
+                Log.e(TAG, "Google login method not available", e)
             }
         }
     }
 
     /**
-     * Check if the user is already logged in.
-     */
-    fun isUserLoggedIn(): Boolean {
-        return authRepository.isLoggedIn()
-    }
-
-    /**
-     * Log out the current user.
+     * Log the user out.
      */
     fun logout() {
         viewModelScope.launch {
-            try {
-                facebookAuthHelper?.logout()
-                googleAuthHelper?.signOut()
-                authRepository.logout()
-                _uiState.value = AuthUiState.Idle
-            } catch (e: Exception) {
-                Log.e(TAG, "Error during logout", e)
-                _uiState.value = AuthUiState.Error("Failed to logout properly")
+            authRepository.logout()
+            preferenceManager.clear()
+            _uiState.value = AuthUiState.Idle
+        }
+    }
+    
+    /**
+     * Request a password reset for the given email.
+     */
+    fun requestPasswordReset(email: String) {
+        if (email.isBlank()) {
+            _uiState.value = AuthUiState.Error("Email cannot be empty")
+            return
+        }
+        
+        viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            
+            authRepository.requestPasswordReset(email).collectLatest { result ->
+                when (result.status) {
+                    ApiStatus.SUCCESS -> {
+                        _uiState.value = AuthUiState.Success("password_reset_requested")
+                        Log.d(TAG, "Password reset requested successfully for email: $email")
+                    }
+                    ApiStatus.ERROR -> {
+                        _uiState.value = AuthUiState.Error(result.message ?: "Password reset request failed")
+                        Log.e(TAG, "Password reset request failed: ${result.message}")
+                    }
+                    ApiStatus.LOADING -> {
+                        // Already set loading state above
+                    }
+                }
             }
         }
     }
-
+    
     /**
-     * Reset the UI state to Idle.
+     * Verify a password reset code and set a new password.
      */
-    fun resetState() {
-        _uiState.value = AuthUiState.Idle
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        try {
-            facebookAuthHelper?.logout()
-            googleAuthHelper?.signOut()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error during cleanup", e)
-        } finally {
-            facebookAuthHelper = null
-            googleAuthHelper = null
+    fun resetPassword(email: String, code: String, newPassword: String) {
+        if (email.isBlank() || code.isBlank() || newPassword.isBlank()) {
+            _uiState.value = AuthUiState.Error("All fields are required")
+            return
         }
-    }
-
-    /**
-     * Handle Facebook login success.
-     */
-    fun handleFacebookLoginSuccess(result: LoginResult) {
+        
         viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            
             try {
-                _uiState.value = AuthUiState.Loading
-                val token = result.accessToken.token
-                val result = authRepository.loginWithFacebook(token)
-                result.onSuccess { user ->
-                    _uiState.value = AuthUiState.Success("fb_$token")
-                    Log.d(TAG, "User logged in successfully: ${user.name}")
-                }.onFailure { exception ->
-                    _uiState.value = AuthUiState.Error(exception.message ?: "Authentication failed")
-                    Log.e(TAG, "Login failed", exception)
+                // Attempt to use verifyPasswordReset method if it exists
+                authRepository.verifyPasswordReset(email, code, newPassword).collectLatest { result ->
+                    when (result.status) {
+                        ApiStatus.SUCCESS -> {
+                            _uiState.value = AuthUiState.Success("password_reset_success")
+                            Log.d(TAG, "Password reset completed successfully for email: $email")
+                        }
+                        ApiStatus.ERROR -> {
+                            _uiState.value = AuthUiState.Error(result.message ?: "Password reset failed")
+                            Log.e(TAG, "Password reset failed: ${result.message}")
+                        }
+                        ApiStatus.LOADING -> {
+                            // Already set loading state above
+                        }
+                    }
                 }
             } catch (e: Exception) {
-                _uiState.value = AuthUiState.Error(e.message ?: "An unknown error occurred")
-                Log.e(TAG, "Error during Facebook authentication", e)
+                // If the method doesn't exist, fallback to a generic error message
+                _uiState.value = AuthUiState.Error("Password reset is not implemented yet")
+                Log.e(TAG, "Password reset method not available", e)
             }
         }
-    }
-
-    /**
-     * Handle Facebook login cancellation.
-     */
-    fun handleFacebookLoginCancel() {
-        _uiState.value = AuthUiState.Error("Facebook login cancelled")
-        Log.d(TAG, "Facebook login cancelled by user")
-    }
-
-    /**
-     * Handle Facebook login error.
-     */
-    fun handleFacebookLoginError(error: FacebookException) {
-        _uiState.value = AuthUiState.Error(error.message ?: "Facebook login failed")
-        Log.e(TAG, "Facebook login error", error)
     }
 }

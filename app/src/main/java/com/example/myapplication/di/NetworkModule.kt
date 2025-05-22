@@ -3,6 +3,8 @@ package com.example.myapplication.di
 import com.example.myapplication.BuildConfig
 import com.example.myapplication.data.api.ApiService
 import com.example.myapplication.data.api.RetrofitClient
+import com.example.myapplication.data.api.config.AuthInterceptor
+import com.example.myapplication.data.preference.AuthPreferenceManager
 import com.example.myapplication.utils.NetworkUtils
 import dagger.Module
 import dagger.Provides
@@ -23,7 +25,13 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideAuthInterceptor(authPreferenceManager: AuthPreferenceManager): AuthInterceptor {
+        return AuthInterceptor(authPreferenceManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
         val builder = OkHttpClient.Builder()
             .connectTimeout(60, TimeUnit.SECONDS)  // Increased timeout
             .readTimeout(60, TimeUnit.SECONDS)     // Increased timeout
@@ -62,9 +70,8 @@ object NetworkModule {
             builder.addInterceptor(loggingInterceptor)
         }
 
-        // Add auth interceptor if needed
-        // builder.addInterceptor(AuthInterceptor(preferenceManager))
-
+        // Add auth interceptor
+        builder.addInterceptor(authInterceptor)
 
         return builder.build()
     }

@@ -47,7 +47,9 @@ private const val TAG = "SignInScreen"
 fun SignInScreen(
     onNavigateToRegister: () -> Unit = {},
     onNavigateToForgotPassword: () -> Unit = {},
-    onSignInSuccess: () -> Unit = {},
+    onSignInSuccess: () -> Unit = {
+        android.util.Log.d(TAG, "onSignInSuccess callback triggered, but default implementation does nothing")
+    },
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -110,10 +112,24 @@ fun SignInScreen(
     }
 
     LaunchedEffect(uiState) {
+        android.util.Log.d(TAG, "LaunchedEffect triggered with uiState: $uiState")
         when (uiState) {
-            is AuthUiState.Success -> onSignInSuccess()
-            is AuthUiState.Error -> Toast.makeText(context, (uiState as AuthUiState.Error).message, Toast.LENGTH_SHORT).show()
-            else -> {}
+            is AuthUiState.Success -> {
+                android.util.Log.d(TAG, "Auth successful! Calling onSignInSuccess navigation callback")
+                onSignInSuccess()
+                android.util.Log.d(TAG, "onSignInSuccess navigation callback completed")
+            }
+            is AuthUiState.Error -> {
+                val errorMsg = (uiState as AuthUiState.Error).message
+                android.util.Log.e(TAG, "Auth error: $errorMsg")
+                Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+            }
+            is AuthUiState.Loading -> {
+                android.util.Log.d(TAG, "Auth state: Loading")
+            }
+            else -> {
+                android.util.Log.d(TAG, "Auth state: ${uiState::class.java.simpleName}")
+            }
         }
     }
 
@@ -317,36 +333,36 @@ fun SignInScreen(
             
             Spacer(modifier = Modifier.height(24.dp))
             
+            // Sign In Button
             Button(
-                onClick = { 
+                onClick = {
                     if (validateForm()) {
-                        // Save credentials if "Remember Me" is checked
-                        if (rememberMe) {
-                            // securely store credentials here
-                            // using EncryptedSharedPreferences
-                        }
-                        // Perform the login using ViewModel
                         viewModel.login(email, password)
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF149459)),
-                shape = RoundedCornerShape(16.dp),
+                enabled = uiState !is AuthUiState.Loading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
+                    .height(60.dp)
+                    .padding(vertical = 8.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF149459),
+                    contentColor = Color.White
+                )
             ) {
                 if (uiState is AuthUiState.Loading) {
                     CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
                         color = Color.White,
-                        modifier = Modifier.size(24.dp)
+                        strokeWidth = 2.dp
                     )
                 } else {
                     Text(
-                        "Sign In",
-                        color = Color.White,
-                        fontSize = 18.sp,
+                        text = "Sign In",
                         fontFamily = poppins,
                         fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
                         letterSpacing = 0.08.sp
                     )
                 }

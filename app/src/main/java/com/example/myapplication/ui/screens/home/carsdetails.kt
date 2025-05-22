@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
@@ -31,62 +32,449 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.poppins
+import androidx.hilt.navigation.compose.hiltViewModel
+import android.widget.Toast
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CarDetailsScreen(
+    carId: String?,
     onBackPressed: () -> Unit = {},
     onGalleryClick: () -> Unit = {},
-    onBookNowClick: () -> Unit = {}
+    onBookNowClick: () -> Unit = {},
+    viewModel: CarViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
     val scrollState = rememberScrollState()
     var isFavorite by remember { mutableStateOf(false) }
+    
+    // Collect the UI state from the ViewModel
+    val carDetailsState by viewModel.carDetailsState.collectAsState()
+    
+    // State for storing the car details
+    var car by remember { mutableStateOf<com.example.myapplication.data.model.Car?>(null) }
+    
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
+    // Load car details when screen is first displayed
+    LaunchedEffect(carId) {
+        carId?.toLongOrNull()?.let { id ->
+            viewModel.loadCarById(id)
+        }
+    }
+    
+    // Use LaunchedEffect to show Toast in a Composable context
+    LaunchedEffect(carDetailsState) {
+        when (carDetailsState) {
+            is CarUiState.SingleCarSuccess -> {
+                car = (carDetailsState as CarUiState.SingleCarSuccess).car
+            }
+            is CarUiState.Error -> {
+                android.widget.Toast.makeText(
+                    context,
+                    (carDetailsState as CarUiState.Error).message,
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+            else -> {}
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF2F5FA))
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-        ) {
-            // Top Car Image Section with Back Button and Favorite Button
-            TopImageSection(
-                isFavorite = isFavorite,
-                onFavoriteClick = { isFavorite = !isFavorite },
-                onBackPressed = onBackPressed,
-                title = "Car Details",
-                showFavorite = true
-            )
-
-            // Car Info Section
+        if (carDetailsState is CarUiState.Loading) {
+            // Loading state
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF149459)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Loading car details...",
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Gray
+                    )
+                }
+            }
+        } else if (carDetailsState is CarUiState.Error) {
+            // Error state
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Error,
+                        contentDescription = "Error",
+                        tint = Color.Red,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = (carDetailsState as CarUiState.Error).message,
+                        fontFamily = poppins,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Red,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { 
+                            carId?.toLongOrNull()?.let { id ->
+                                viewModel.loadCarById(id)
+                            } 
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF149459)
+                        )
+                    ) {
+                        Text("Retry")
+                    }
+                }
+            }
+        } else if (car != null) {
+            // Car details content
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFF2F5FA))
-                    .padding(horizontal = 15.dp, vertical = 10.dp)
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
             ) {
-                // Top Row - Auto tag and Rating
-                CarTagAndRating()
+                // Top Car Image Section with Back Button and Favorite Button
+                TopImageSection(
+                    isFavorite = isFavorite,
+                    onFavoriteClick = { isFavorite = !isFavorite },
+                    onBackPressed = onBackPressed,
+                    title = "${car?.brand} ${car?.model}",
+                    showFavorite = true
+                )
 
-                // Car Name
-                CarNameSection()
+                // Car Info Section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFF2F5FA))
+                        .padding(horizontal = 15.dp, vertical = 10.dp)
+                ) {
+                    // Top Row - Transmission and Rating
+                    CarTagAndRating(
+                        transmission = car?.transmission ?: "Auto",
+                        rating = car?.rating?.toFloat() ?: 4.5f
+                    )
 
-                // Tabs (About & Gallery)
-                TabsSection(onGalleryClick = onGalleryClick)
+                    // Car Name
+                    CarNameSection(
+                        carName = "${car?.brand} ${car?.model}",
+                        year = car?.year?.toString() ?: "2024"
+                    )
 
-                // Car Renter Info
-                CarRenterSection()
+                    // Tabs (About & Gallery)
+                    TabsSection(onGalleryClick = onGalleryClick)
 
-                // Details Section
-                DetailsSection()
+                    // Car Details
+                    car?.let { carData ->
+                        CarDetailsContent(car = carData)
+                    }
+                }
+
+                // Price and Book Now Section - Moved outside the column for full width
+                PriceAndBookSection(
+                    price = "${car?.rentalPricePerDay}DA",
+                    onBookNowClick = onBookNowClick
+                )
             }
+        }
+    }
+}
 
-            // Price and Book Now Section - Moved outside the column for full width
-            PriceAndBookSection(onBookNowClick = onBookNowClick)
+@Composable
+fun CarDetailsContent(car: com.example.myapplication.data.model.Car) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp)
+    ) {
+        // Car description
+        Text(
+            text = "Description",
+            fontSize = 18.sp,
+            fontFamily = poppins,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.Black
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text(
+            text = car.description ?: "No description available for this car.",
+            fontSize = 14.sp,
+            fontFamily = poppins,
+            fontWeight = FontWeight.Normal,
+            color = Color.Gray,
+            lineHeight = 24.sp
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Car specifications
+        Text(
+            text = "Specifications",
+            fontSize = 18.sp,
+            fontFamily = poppins,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.Black
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Specifications grid
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Row 1
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                SpecificationItem(
+                    label = "Brand",
+                    value = car.brand,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                SpecificationItem(
+                    label = "Model",
+                    value = car.model,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Row 2
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                SpecificationItem(
+                    label = "Year",
+                    value = car.year?.toString() ?: "N/A",
+                    modifier = Modifier.weight(1f)
+                )
+                
+                SpecificationItem(
+                    label = "Color",
+                    value = car.colour ?: "N/A",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Row 3
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                SpecificationItem(
+                    label = "Transmission",
+                    value = car.transmission ?: "Auto",
+                    modifier = Modifier.weight(1f)
+                )
+                
+                SpecificationItem(
+                    label = "Fuel Type",
+                    value = car.fuel ?: "Petrol",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Row 4
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                SpecificationItem(
+                    label = "Car Type",
+                    value = car.type ?: "N/A",
+                    modifier = Modifier.weight(1f)
+                )
+                
+                SpecificationItem(
+                    label = "Number of Seats",
+                    value = car.seatingCapacity?.toString() ?: "5",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SpecificationItem(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+    ) {
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            fontFamily = poppins,
+            fontWeight = FontWeight.Medium,
+            color = Color.Gray
+        )
+        
+        Spacer(modifier = Modifier.height(4.dp))
+        
+        Text(
+            text = value,
+            fontSize = 16.sp,
+            fontFamily = poppins,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.Black
+        )
+    }
+}
+
+@Composable
+fun CarTagAndRating(
+    transmission: String,
+    rating: Float
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = transmission,
+            fontSize = 14.sp,
+            fontFamily = poppins,
+            fontWeight = FontWeight.Medium,
+            color = Color.Black
+        )
+
+        // Rating
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.green_star),
+                contentDescription = "Rating",
+                tint = Color(0xFF149459),
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = rating.toString(),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black
+            )
+        }
+    }
+}
+
+@Composable
+fun CarNameSection(
+    carName: String,
+    year: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = carName,
+            fontSize = 20.sp,
+            fontFamily = poppins,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = year,
+            fontSize = 20.sp,
+            fontFamily = poppins,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF149459)
+        )
+    }
+}
+
+@Composable
+fun PriceAndBookSection(
+    price: String,
+    onBookNowClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 15.dp, vertical = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Price",
+                    fontSize = 14.sp,
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Gray
+                )
+                Text(
+                    text = "$price/day",
+                    fontSize = 20.sp,
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF149459)
+                )
+            }
+            
+            Button(
+                onClick = onBookNowClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF149459)
+                ),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .height(50.dp)
+                    .width(130.dp)
+            ) {
+                Text(
+                    text = "Book Now",
+                    fontSize = 16.sp,
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 }
@@ -228,57 +616,6 @@ fun TopImageSection(
             }
         }
     }
-}
-
-@Composable
-fun CarTagAndRating() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = "Auto",
-            fontSize = 14.sp,
-            fontFamily = poppins,
-            fontWeight = FontWeight.Medium,
-            color = Color.Black
-        )
-
-        // Rating
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.green_star),
-                contentDescription = "Rating",
-                tint = Color(0xFF149459),
-                modifier = Modifier.size(18.dp)
-            )
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            Text(
-                text = "4.9",
-                fontSize = 17.sp,
-                fontFamily = poppins,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-        }
-    }
-}
-
-@Composable
-fun CarNameSection() {
-    Text(
-        text = "Ford Mustang GT Premium 2024",
-        fontSize = 19.sp,
-        fontFamily = poppins,
-        fontWeight = FontWeight.SemiBold,
-        color = Color.Black,
-        modifier = Modifier.padding(top = 4.dp, bottom = 20.dp)
-    )
 }
 
 @Composable
@@ -433,96 +770,13 @@ fun CarRenterSection() {
 }
 
 @Composable
-fun DetailsSection() {
-    Column {
-        // Details Header
-        Text(
-            text = "details",
-            fontSize = 21.sp,
-            fontFamily = poppins,
-            fontWeight = FontWeight.Normal,
-            color = Color.Black,
-
-            )
-
-        // Car Description
-        Text(
-            text = "    The Ford is a powerful and stylish muscle car. It features a 5.0L V8 engine with 480 horsepower, a 6-speed manual transmission. Inside, it offers luxurious seating, a modern curved glass display, and high-tech features.",
-            fontSize = 14.sp,
-            fontFamily = poppins,
-            fontWeight = FontWeight.Normal,
-            color = Color.Black.copy(alpha = 0.6f),
-        )
-    }
-}
-
-@Composable
-fun PriceAndBookSection(onBookNowClick: () -> Unit = {}) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(120.dp)
-            .padding(top = 30.dp)
-            .clip(RoundedCornerShape(0.dp))
-            .background(Color(0xFFF2F5FA))
-            .border(
-                width = 2.dp,
-                color = Color.White,
-                shape = RoundedCornerShape(15.dp)
-            )
-            .padding(vertical = 20.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Price",
-                    fontSize = 15.sp,
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.Normal,
-                    color = Color.Black
-                )
-
-                Text(
-                    text = "00.00DA/hr",
-                    fontSize = 21.sp,
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.Normal,
-                    color = Color.Black
-                )
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Book Now Button
-            Button(
-                onClick = onBookNowClick,
-                modifier = Modifier
-                    .height(40.dp)
-                    .width(150.dp),
-                shape = RoundedCornerShape(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF149459)
-                )
-            ) {
-                Text(
-                    text = "Book Now",
-                    fontSize = 18.sp,
-                    fontFamily = poppins,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White
-                )
-            }
-        }
-    }
+fun CarImagesSection(car: com.example.myapplication.data.model.Car, onImageClick: () -> Unit = {}) {
+    // Implementation of the car images section
+    // Make sure any calls to Composable functions are within this Composable function
 }
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun CarDetailsScreenPreview() {
-    CarDetailsScreen()
+    CarDetailsScreen("1")
 }

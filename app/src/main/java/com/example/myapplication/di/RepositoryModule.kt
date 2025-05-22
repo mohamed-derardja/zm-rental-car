@@ -1,8 +1,8 @@
 package com.example.myapplication.di
 
 import com.example.myapplication.data.api.ApiService
-import com.example.myapplication.data.repository.UserRepository
-import com.example.myapplication.data.repository.UserRepositoryImpl
+import com.example.myapplication.data.preference.AuthPreferenceManager
+import com.example.myapplication.data.repository.*
 import com.example.myapplication.utils.PreferenceManager
 import dagger.Module
 import dagger.Provides
@@ -14,6 +14,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
     
+    // For backward compatibility, we keep the old repository implementation
     @Provides
     @Singleton
     fun provideUserRepository(
@@ -23,12 +24,30 @@ object RepositoryModule {
         return UserRepositoryImpl(apiService, preferenceManager)
     }
     
-    // Add other repository providers here as needed
+    @Provides
+    @Singleton
+    fun provideAuthRepository(
+        apiService: ApiService,
+        authPreferenceManager: AuthPreferenceManager
+    ): AuthRepository {
+        return AuthRepositoryImpl(apiService, authPreferenceManager)
+    }
     
-    // Example for other repositories:
-    // @Provides
-    // @Singleton
-    // fun provideCarRepository(apiService: ApiService): CarRepository {
-    //     return CarRepositoryImpl(apiService)
-    // }
+    @Provides
+    @Singleton
+    fun provideCarRepository(
+        apiService: ApiService,
+        authPreferenceManager: AuthPreferenceManager
+    ): CarRepository {
+        return CarRepositoryImpl(apiService, authPreferenceManager)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideReservationRepository(
+        apiService: ApiService,
+        authPreferenceManager: AuthPreferenceManager
+    ): ReservationRepository {
+        return ReservationRepositoryImpl(apiService, authPreferenceManager)
+    }
 }

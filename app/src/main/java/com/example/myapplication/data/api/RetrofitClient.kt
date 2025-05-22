@@ -1,5 +1,6 @@
 package com.example.myapplication.data.api
 
+import com.example.myapplication.BuildConfig
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -32,10 +33,9 @@ class RetrofitClient @Inject constructor(
     }
 
     companion object {
-        // Updated to point to the actual backend location
-        // Using 10.0.2.2 which is the special IP that Android emulators use to access the host machine
-        const val BASE_URL = "http://10.0.2.2:8080/api/"
-
+        // Use the base URL from BuildConfig
+        val BASE_URL = BuildConfig.API_BASE_URL
+            
         // For direct usage in places where DI is not available
         @Volatile
         private var INSTANCE: RetrofitClient? = null

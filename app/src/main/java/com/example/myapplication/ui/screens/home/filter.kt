@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.screens.home
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,11 +31,11 @@ import kotlin.math.roundToInt
 @Composable
 fun Filter(
     onBackClick: () -> Unit = {},
-    onApplyFilters: () -> Unit = {},
+    onApplyFilters: (FilterParams) -> Unit = {},
     onResetFilters: () -> Unit = {}
 ) {
     val green = Color(0xFF149459)
-    val types = listOf("All", "Type1", "Type2", "Type3", "Type4", "Type5")
+    val types = listOf("All", "SUV", "Sedan", "Compact", "Luxury", "Electric")
     val brands = listOf(
         Brand("None", R.drawable.none_withoutcircle), // Added "None" as first option
         Brand("Mercedes", R.drawable.mercedess),
@@ -135,7 +136,10 @@ fun Filter(
                             .clip(RoundedCornerShape(8.dp))
                             .background(if (selected) green else Color.White)
                             .border(1.dp, if (selected) green else Color.LightGray, RoundedCornerShape(8.dp))
-                            .clickable { selectedType = type }
+                            .clickable { 
+                                selectedType = type 
+                                Log.d("Filter", "Selected type: $type")
+                            }
                             .padding(horizontal = 18.dp, vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -276,7 +280,13 @@ fun Filter(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Button(
-                    onClick = onResetFilters,
+                    onClick = { 
+                        selectedType = "All"
+                        selectedBrand = "None"
+                        priceValue = 0.3f
+                        selectedReview = 0
+                        onResetFilters()
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = green),
                     shape = RoundedCornerShape(30.dp),
                     modifier = Modifier
@@ -287,7 +297,31 @@ fun Filter(
                 }
 
                 Button(
-                    onClick = onApplyFilters,
+                    onClick = { 
+                        // Create and pass filter parameters
+                        val filterParams = FilterParams(
+                            type = if (selectedType == "All") null else selectedType,
+                            brand = if (selectedBrand == "None") null else selectedBrand,
+                            maxPrice = currentPrice,
+                            minRating = when (selectedReview) {
+                                0 -> 4.5f
+                                1 -> 4.0f
+                                2 -> 3.5f
+                                3 -> 3.0f
+                                4 -> 2.5f
+                                else -> 0f
+                            }
+                        )
+                        
+                        // Log the filter parameters for debugging
+                        Log.d("Filter", "Created filter params:")
+                        Log.d("Filter", "  Type: ${filterParams.type ?: "None"}")
+                        Log.d("Filter", "  Brand: ${filterParams.brand ?: "None"}")
+                        Log.d("Filter", "  Rating: ${filterParams.minRating}")
+                        Log.d("Filter", "  Max Price: ${filterParams.maxPrice}")
+                        
+                        onApplyFilters(filterParams)
+                    },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
                         contentColor = Color.Black
@@ -306,6 +340,13 @@ fun Filter(
         }
     }
 }
+
+data class FilterParams(
+    val type: String? = null,
+    val brand: String? = null,
+    val maxPrice: Int = 5000,
+    val minRating: Float = 0f
+)
 
 data class Brand(val name: String, val iconRes: Int)
 data class ReviewOption(val min: Float, val max: Float, val label: String, val starsToShow: Int)

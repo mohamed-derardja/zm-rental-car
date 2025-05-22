@@ -251,7 +251,7 @@ interface ApiService {
     @PUT("users/{id}/driving-license")
     suspend fun updateDrivingLicense(
         @Path("id") id: Long,
-        @Body license: DrivingLicense,
+        @Body drivingLicense: DrivingLicense,
         @Header("Authorization") token: String
     ): DrivingLicense
 
@@ -289,34 +289,4 @@ interface ApiService {
         @Path("carId") carId: Long,
         @Header("Authorization") token: String
     ): List<Long>
-
-    // Request/Response Data Classes
-    data class AuthResponse(
-        val id: Long,
-        val token: String
-    )
-
-    data class PasswordResetResponse(
-        val message: String
-    )
-
-    data class UpdateProfileRequest(
-        val name: String? = null,
-        val email: String? = null,
-        val phone: String? = null,
-        val address: Address? = null,
-        val drivingLicense: DrivingLicense? = null
-    )
-
-    data class PagedResponse<T>(
-        val content: List<T>,
-        val totalElements: Long,
-        val totalPages: Int,
-        val size: Int,
-        val number: Int
-    )
-
-    data class ImageUploadResponse(
-        val url: String
-    )
-}
+} 
