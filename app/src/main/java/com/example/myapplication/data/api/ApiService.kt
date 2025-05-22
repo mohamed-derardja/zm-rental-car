@@ -10,23 +10,23 @@ import retrofit2.http.*
 
 interface ApiService {
     // User Profile
-    @GET("users/{id}")
+    @GET("https://3b9e-105-235-135-2.ngrok-free.app/users/{id}")
     suspend fun getUserById(@Path("id") id: Long, @Header("Authorization") token: String): User
 
-    @GET("users/me")
+    @GET("https://3b9e-105-235-135-2.ngrok-free.app/users/me")
     suspend fun getCurrentUser(@Header("Authorization") token: String): User
 
     // Facebook OAuth
-    @GET("users/oauth2/redirect")
+    @GET("https://3b9e-105-235-135-2.ngrok-free.app/users/oauth2/redirect")
     suspend fun handleOAuth2Redirect(
         @Query("token") token: String, 
         @Query("userId") userId: Long
     ): AuthResponse
 
-    @GET("users/oauth2/check-email")
+    @GET("https://3b9e-105-235-135-2.ngrok-free.app/users/oauth2/check-email")
     suspend fun checkEmailExists(@Query("email") email: String): Map<String, Boolean>
 
-    @PUT("users/{id}")
+    @PUT("https://3b9e-105-235-135-2.ngrok-free.app/users/{id}")
     suspend fun updateUserProfile(
         @Path("id") id: Long,
         @Body request: UpdateProfileRequest,
@@ -34,13 +34,13 @@ interface ApiService {
     ): User
 
     // Authentication
-    @POST("users/login")
+    @POST("https://3b9e-105-235-135-2.ngrok-free.app/users/login")
     suspend fun login(
         @Query("email") email: String,
         @Query("password") password: String
     ): AuthResponse
 
-    @POST("users/register")
+    @POST("https://3b9e-105-235-135-2.ngrok-free.app/users/register")
     suspend fun register(
         @Query("name") name: String,
         @Query("email") email: String,
@@ -48,31 +48,31 @@ interface ApiService {
         @Query("phone") phone: String
     ): AuthResponse
 
-    @POST("users/{userId}/verify-email")
+    @POST("https://3b9e-105-235-135-2.ngrok-free.app/users/{userId}/verify-email")
     suspend fun verifyEmail(
         @Path("userId") userId: Long,
         @Query("code") code: String,
         @Header("Authorization") token: String
     ): String
 
-    @POST("users/password-reset/request")
+    @POST("https://3b9e-105-235-135-2.ngrok-free.app/users/password-reset/request")
     suspend fun requestPasswordReset(@Query("email") email: String)
 
-    @POST("users/password-reset/verify")
+    @POST("https://3b9e-105-235-135-2.ngrok-free.app/users/password-reset/verify")
     suspend fun verifyPasswordReset(
         @Query("email") email: String,
         @Query("code") code: String,
         @Query("newPassword") newPassword: String
     ): PasswordResetResponse
 
-    @POST("users/me/change-password")
+    @POST("https://3b9e-105-235-135-2.ngrok-free.app/users/me/change-password")
     suspend fun changePassword(
         @Query("currentPassword") currentPassword: String,
         @Query("newPassword") newPassword: String,
         @Header("Authorization") token: String
     )
 
-    @DELETE("users/{id}")
+    @DELETE("tcp://7.tcp.eu.ngrok.io:17908/users/{id}")
     suspend fun deleteAccount(
         @Path("id") id: Long,
         @Header("Authorization") token: String
@@ -80,7 +80,7 @@ interface ApiService {
 
     // Profile Management
     @Multipart
-    @POST("users/me/avatar")
+    @POST("tcp://7.tcp.eu.ngrok.io:17908/users/me/avatar")
     suspend fun uploadProfileImage(
         @Part image: MultipartBody.Part,
         @Header("Authorization") token: String
@@ -90,7 +90,7 @@ interface ApiService {
     @GET("cars")
     suspend fun getAllCars(): List<Car>
 
-    @GET("cars/paged")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/cars/paged")
     suspend fun getAllCarsPaged(
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 10,
@@ -103,14 +103,14 @@ interface ApiService {
         @Query("rentalStatus") rentalStatus: String? = null
     ): PagedResponse<Car>
 
-    @GET("cars/available/paged")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/cars/available/paged")
     suspend fun getAvailableCarsPaged(
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 10,
         @Query("sort") sort: String = "id"
     ): PagedResponse<Car>
 
-    @GET("cars/brand/{brand}/paged")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/cars/brand/{brand}/paged")
     suspend fun getCarsByBrandPaged(
         @Path("brand") brand: String,
         @Query("page") page: Int = 0,
@@ -118,7 +118,7 @@ interface ApiService {
         @Query("sort") sort: String = "id"
     ): PagedResponse<Car>
 
-    @GET("cars/model/{model}/paged")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/cars/model/{model}/paged")
     suspend fun getCarsByModelPaged(
         @Path("model") model: String,
         @Query("page") page: Int = 0,
@@ -126,7 +126,7 @@ interface ApiService {
         @Query("sort") sort: String = "id"
     ): PagedResponse<Car>
 
-    @GET("cars/rating/paged")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/cars/rating/paged")
     suspend fun getCarsByRatingRangePaged(
         @Query("minRating") minRating: Long,
         @Query("maxRating") maxRating: Long,
@@ -135,26 +135,26 @@ interface ApiService {
         @Query("sort") sort: String = "id"
     ): PagedResponse<Car>
 
-    @GET("cars/{id}")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/cars/{id}")
     suspend fun getCarById(@Path("id") id: Long): Car
 
     // User Car Browsing
-    @GET("users/cars")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/users/cars")
     suspend fun getAllAvailableCars(@Header("Authorization") token: String): List<Car>
 
-    @GET("users/cars/brand/{brand}")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/users/cars/brand/{brand}")
     suspend fun getCarsByBrand(
         @Path("brand") brand: String,
         @Header("Authorization") token: String
     ): List<Car>
 
-    @GET("users/cars/model/{model}")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/users/cars/model/{model}")
     suspend fun getCarsByModel(
         @Path("model") model: String,
         @Header("Authorization") token: String
     ): List<Car>
 
-    @GET("users/cars/rating")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/users/cars/rating")
     suspend fun getCarsByRatingRange(
         @Query("minRating") minRating: Long,
         @Query("maxRating") maxRating: Long,
@@ -162,40 +162,40 @@ interface ApiService {
     ): List<Car>
 
     // Reservation Management
-    @GET("reservations")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/reservations")
     suspend fun getAllReservations(@Header("Authorization") token: String): List<Reservation>
 
-    @GET("reservations/{id}")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/reservations/{id}")
     suspend fun getReservationById(
         @Path("id") id: Long,
         @Header("Authorization") token: String
     ): Reservation
 
-    @GET("reservations/user/{userId}")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/reservations/user/{userId}")
     suspend fun getReservationsByUserId(
         @Path("userId") userId: Long,
         @Header("Authorization") token: String
     ): List<Reservation>
 
-    @GET("reservations/car/{carId}")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/reservations/car/{carId}")
     suspend fun getReservationsByCarId(
         @Path("carId") carId: Long,
         @Header("Authorization") token: String
     ): List<Reservation>
 
-    @GET("reservations/status/{status}")
+    @GET("tcp://7.tcp.eu.ngrok.io:17908/reservations/status/{status}")
     suspend fun getReservationsByStatus(
         @Path("status") status: String,
         @Header("Authorization") token: String
     ): List<Reservation>
 
-    @POST("reservations")
+    @POST("tcp://7.tcp.eu.ngrok.io:17908/reservations")
     suspend fun createReservation(
         @Body reservation: Reservation,
         @Header("Authorization") token: String
     ): Reservation
 
-    @PUT("reservations/{id}")
+    @PUT("tcp://7.tcp.eu.ngrok.io:17908/reservations/{id}")
     suspend fun updateReservation(
         @Path("id") id: Long,
         @Body reservation: Reservation,
@@ -234,7 +234,7 @@ interface ApiService {
     ): List<Reservation>
 
     // Address Management
-    @PUT("users/{id}/address")
+    @PUT("https://3b9e-105-235-135-2.ngrok-free.app/users/{id}/address")
     suspend fun updateAddress(
         @Path("id") id: Long,
         @Body address: Address,
@@ -248,7 +248,7 @@ interface ApiService {
     ): Address
 
     // Driving License Management
-    @PUT("users/{id}/driving-license")
+    @PUT("https://3b9e-105-235-135-2.ngrok-free.app/users/{id}/driving-license")
     suspend fun updateDrivingLicense(
         @Path("id") id: Long,
         @Body drivingLicense: DrivingLicense,

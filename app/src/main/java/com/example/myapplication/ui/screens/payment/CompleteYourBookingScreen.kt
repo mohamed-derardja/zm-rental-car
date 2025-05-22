@@ -1,6 +1,8 @@
 package com.example.myapplication.ui.screens.payment
 
-// Removed AnimatedVisibility import
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -48,6 +50,7 @@ fun CarBookingScreen(
     var email by remember { mutableStateOf("") }
     var selectedWilaya by remember { mutableStateOf("") }
     var hasDriverLicense by remember { mutableStateOf(false) }
+    var driverLicenseUri by remember { mutableStateOf<Uri?>(null) }
     var isSubmitting by remember { mutableStateOf(false) }
 
     // Form validation state
@@ -147,6 +150,16 @@ fun CarBookingScreen(
     val wilayas = listOf("Algiers", "Oran", "Blida", "Setif", "Constantine", "Annaba", "Tlemcen", "Batna")
     val scrollState = rememberScrollState()
 
+    // File picker launcher
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            driverLicenseUri = it
+            hasDriverLicense = true
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -170,30 +183,30 @@ fun CarBookingScreen(
                         .clip(CircleShape)
                         .background(Color(0xFFFFFFFF))
                         .clickable { onBackClick() }
-                    )   {
-                        IconButton(
-                            onClick = { onBackClick() },
-                            modifier = Modifier.size(45.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back",
-                                tint = Color.Black,
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
+                ) {
+                    IconButton(
+                        onClick = { onBackClick() },
+                        modifier = Modifier.size(45.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.Black,
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
-
-                    // Title "Complete Your Booking" at the center
-                    Text(
-                        text = "Complete Your Booking",
-                        fontSize = 23.sp,
-                        fontFamily = poppins,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.Black,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
                 }
+
+                // Title "Complete Your Booking" at the center
+                Text(
+                    text = "Complete Your Booking",
+                    fontSize = 23.sp,
+                    fontFamily = poppins,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
 
             // Form content
             Column(
@@ -237,18 +250,18 @@ fun CarBookingScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
-                    value = firstName,
-                    onValueChange = {
-                        firstName = it
-                        if (firstNameError != null) validateFirstName()
-                    },
+                        value = firstName,
+                        onValueChange = {
+                            firstName = it
+                            if (firstNameError != null) validateFirstName()
+                        },
                         placeholder = { Text("First Name",
                             fontFamily = poppins,
                             fontWeight = FontWeight.Normal,
                             fontSize = 16.sp,
                             color = Color.Black.copy(alpha = 0.6f),
                             letterSpacing = 0.08.sp) },
-                        
+
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -261,13 +274,13 @@ fun CarBookingScreen(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White
                         ),
-                    keyboardOptions = KeyboardOptions(
+                        keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Next
+                            imeAction = ImeAction.Next
                         ),
                         isError = firstNameError != null
                     )
-                    
+
                     if (firstNameError != null) {
                         Text(
                             text = firstNameError ?: "",
@@ -297,18 +310,18 @@ fun CarBookingScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
-                    value = lastName,
-                    onValueChange = {
-                        lastName = it
-                        if (lastNameError != null) validateLastName()
-                    },
+                        value = lastName,
+                        onValueChange = {
+                            lastName = it
+                            if (lastNameError != null) validateLastName()
+                        },
                         placeholder = { Text("Last Name",
                             fontFamily = poppins,
                             fontWeight = FontWeight.Normal,
                             fontSize = 16.sp,
                             color = Color.Black.copy(alpha = 0.6f),
                             letterSpacing = 0.08.sp) },
-                        
+
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -321,13 +334,13 @@ fun CarBookingScreen(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White
                         ),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Next
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Next
                         ),
                         isError = lastNameError != null
                     )
-                    
+
                     if (lastNameError != null) {
                         Text(
                             text = lastNameError ?: "",
@@ -357,11 +370,11 @@ fun CarBookingScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
-                    value = phoneNumber,
-                    onValueChange = {
-                        phoneNumber = it
-                        if (phoneNumberError != null) validatePhoneNumber()
-                    },
+                        value = phoneNumber,
+                        onValueChange = {
+                            phoneNumber = it
+                            if (phoneNumberError != null) validatePhoneNumber()
+                        },
                         placeholder = { Text("Enter your Phone Number",
                             fontFamily = poppins,
                             fontWeight = FontWeight.Normal,
@@ -391,13 +404,13 @@ fun CarBookingScreen(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White
                         ),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Phone,
-                        imeAction = ImeAction.Next
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Phone,
+                            imeAction = ImeAction.Next
                         ),
                         isError = phoneNumberError != null
                     )
-                    
+
                     if (phoneNumberError != null) {
                         Text(
                             text = phoneNumberError ?: "",
@@ -427,18 +440,18 @@ fun CarBookingScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
-                    value = email,
-                    onValueChange = {
-                        email = it
-                        if (emailError != null) validateEmail()
-                    },
+                        value = email,
+                        onValueChange = {
+                            email = it
+                            if (emailError != null) validateEmail()
+                        },
                         placeholder = { Text("Example@gmail.com",
                             fontFamily = poppins,
                             fontWeight = FontWeight.Normal,
                             fontSize = 16.sp,
                             color = Color.Black.copy(alpha = 0.6f),
                             letterSpacing = 0.08.sp) },
-                        
+
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -451,13 +464,13 @@ fun CarBookingScreen(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White
                         ),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
                         ),
                         isError = emailError != null
                     )
-                    
+
                     if (emailError != null) {
                         Text(
                             text = emailError ?: "",
@@ -541,7 +554,7 @@ fun CarBookingScreen(
                                     onClick = {
                                         selectedWilaya = wilaya
                                         expanded = false
-                                        wilayaError = null
+                                        if (wilayaError != null) validateWilaya()
                                     }
                                 )
                             }
@@ -581,12 +594,9 @@ fun CarBookingScreen(
                         colors = CardDefaults.cardColors(
                             containerColor = if (driverLicenseError != null) Color(0xFFFFEDED) else Color.White
                         ),
-                        border = CardDefaults.outlinedCardBorder().copy(
-                            brush = if (driverLicenseError != null) {
-                                androidx.compose.ui.graphics.SolidColor(Color.Red)
-                            } else {
-                                androidx.compose.ui.graphics.SolidColor(Color(0xFFD9D9D9))
-                            }
+                        border = androidx.compose.foundation.BorderStroke(
+                            width = 1.dp,
+                            color = if (driverLicenseError != null) Color.Red else Color(0xFFD9D9D9)
                         )
                     ) {
                         Row(
@@ -594,8 +604,7 @@ fun CarBookingScreen(
                                 .fillMaxWidth()
                                 .height(52.dp)
                                 .clickable {
-                                    hasDriverLicense = true
-                                    driverLicenseError = null
+                                    filePickerLauncher.launch("image/*")
                                 }
                                 .padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -603,7 +612,7 @@ fun CarBookingScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = if (hasDriverLicense) "License_scan.pdf" else "Scan your driver license",
+                                    text = if (hasDriverLicense) (driverLicenseUri?.lastPathSegment ?: "license.pdf") else "Scan your driver license",
                                     fontFamily = poppins,
                                     fontWeight = FontWeight.Normal,
                                     fontSize = 16.sp,
@@ -631,7 +640,7 @@ fun CarBookingScreen(
                             ) {
                                 Icon(
                                     painter = painterResource(
-                                        id = if (hasDriverLicense) R.drawable.star_for_the_review_lonly else R.drawable.star_for_the_review_lonly
+                                        id = if (hasDriverLicense) R.drawable.ic_check else R.drawable.ic_upload
                                     ),
                                     contentDescription = "Upload",
                                     tint = if (hasDriverLicense) Color.White else Color.Gray
@@ -652,10 +661,10 @@ fun CarBookingScreen(
                         )
                     }
                 }
-                
+
                 // Add extra padding at bottom to ensure content isn't hidden behind the button
                 Spacer(modifier = Modifier.height(40.dp))
-                
+
                 // Continue Button
                 Button(
                     onClick = {
@@ -695,7 +704,7 @@ fun CarBookingScreen(
                         }
                     }
                 }
-                
+
                 // Add some extra space at the bottom for better spacing
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -712,4 +721,4 @@ fun PreviewCarBookingScreen() {
             onContinueClick = {}
         )
     }
-} 
+}

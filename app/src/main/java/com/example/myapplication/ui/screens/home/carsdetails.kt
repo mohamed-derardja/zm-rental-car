@@ -34,7 +34,9 @@ import com.example.myapplication.R
 import com.example.myapplication.ui.theme.poppins
 import androidx.hilt.navigation.compose.hiltViewModel
 import android.widget.Toast
-
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -194,6 +196,9 @@ fun CarDetailsScreen(
                     price = "${car?.rentalPricePerDay}DA",
                     onBookNowClick = onBookNowClick
                 )
+                
+                // Car Renter Section
+                CarRenterSection()
             }
         }
     }
@@ -685,11 +690,31 @@ fun TabsSection(onGalleryClick: () -> Unit = {}) {
 
 @Composable
 fun CarRenterSection() {
+    val context = LocalContext.current
+    val phoneNumber = "0559880207" // The phone number to call/message
+    
+    // Function to handle phone call
+    fun makePhoneCall() {
+        val intent = Intent(Intent.ACTION_DIAL).apply {
+            data = Uri.parse("tel:$phoneNumber")
+        }
+        context.startActivity(intent)
+    }
+    
+    // Function to handle sending SMS
+    fun sendSms() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("smsto:$phoneNumber")
+            putExtra("sms_body", "")
+        }
+        context.startActivity(intent)
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 20.dp, bottom = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(top = 20.dp, bottom = 10.dp, start = 16.dp, end = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         // Avatar
         Box(
@@ -708,11 +733,13 @@ fun CarRenterSection() {
             )
         }
 
+        Spacer(modifier = Modifier.width(8.dp))
+
         // Renter Info
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 12.dp)
+                .padding(horizontal = 8.dp)
         ) {
             Text(
                 text = "ZM Auto",
@@ -731,20 +758,22 @@ fun CarRenterSection() {
             )
         }
 
-        // Chat Button - using message.xml
+
+        // SMS Button - using message.xml
         Box(
             modifier = Modifier
-                .size(55.dp)
+                .size(50.dp)
                 .clip(CircleShape)
                 .background(Color.White)
-                .border(1.dp, Color.LightGray.copy(alpha = 0.3f), CircleShape),
+                .border(1.dp, Color.LightGray.copy(alpha = 0.3f), CircleShape)
+                .clickable { sendSms() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.message),
-                contentDescription = "Chat",
+                contentDescription = "Send SMS",
                 tint = Color(0xFF007AFF),
-                modifier = Modifier.size(26.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
 
@@ -753,24 +782,21 @@ fun CarRenterSection() {
         // Call Button - using call.xml
         Box(
             modifier = Modifier
-                .size(55.dp)
+                .size(50.dp)
                 .clip(CircleShape)
                 .background(Color.White)
-                .border(1.dp, Color.LightGray.copy(alpha = 0.3f), CircleShape),
+                .border(1.dp, Color.LightGray.copy(alpha = 0.3f), CircleShape)
+                .clickable { makePhoneCall() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.call),
-                contentDescription = "Call",
+                contentDescription = "Call $phoneNumber",
                 tint = Color(0xFF149459),
-                modifier = Modifier.size(26.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
     }
-}
-
-@Composable
-fun CarImagesSection(car: com.example.myapplication.data.model.Car, onImageClick: () -> Unit = {}) {
     // Implementation of the car images section
     // Make sure any calls to Composable functions are within this Composable function
 }
