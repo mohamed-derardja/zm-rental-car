@@ -34,6 +34,7 @@ import com.example.myapplication.ui.theme.poppins
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.LaunchedEffect
 import android.util.Log
+import com.example.myapplication.ui.screens.home.CarListSection1
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,21 +47,22 @@ fun HomeScreen(
     onFilterClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onCatalogClick: () -> Unit = {},
+    onBookNowClick: (String) -> Unit = { carId -> onCarClick(carId) },
     viewModel: CarViewModel = androidx.hilt.navigation.compose.hiltViewModel()
 ) {
     val scrollState = rememberScrollState()
     var searchQuery by remember { mutableStateOf("") }
     var expandedBrands by remember { mutableStateOf(false) }
     var selectedBrand by remember { mutableStateOf("All") }
-    
+
     // Collect the UI state from the ViewModel
     val carUiState by viewModel.uiState.collectAsState()
-    
+
     // State for storing the cars to display
     var cars by remember { mutableStateOf<List<com.example.myapplication.data.model.Car>>(emptyList()) }
-    
+
     val context = androidx.compose.ui.platform.LocalContext.current
-    
+
     // Use LaunchedEffect to show Toast in a Composable context
     LaunchedEffect(carUiState) {
         when (carUiState) {
@@ -74,7 +76,7 @@ fun HomeScreen(
             else -> {}
         }
     }
-    
+
     // Handle changes to UI state
     LaunchedEffect(carUiState) {
         when (carUiState) {
@@ -88,7 +90,7 @@ fun HomeScreen(
             else -> {}
         }
     }
-    
+
     // Handle brand selection
     LaunchedEffect(selectedBrand) {
         if (selectedBrand == "All") {
@@ -97,18 +99,18 @@ fun HomeScreen(
             viewModel.filterByBrand(selectedBrand)
         }
     }
-    
+
     // Search handling
     var debouncedSearchQuery by remember { mutableStateOf("") }
     LaunchedEffect(searchQuery) {
         // Shorter debounce delay for better responsiveness
         kotlinx.coroutines.delay(300) // Debounce delay
         debouncedSearchQuery = searchQuery
-        
+
         // Add debug output
         Log.d("HomeScreen", "Search query: '$searchQuery'")
     }
-    
+
     LaunchedEffect(debouncedSearchQuery) {
         if (debouncedSearchQuery.isNotBlank()) {
             // Apply search filter using the view model
@@ -191,7 +193,7 @@ fun HomeScreen(
                 // Search Field
                 TextField(
                     value = searchQuery,
-                    onValueChange = { 
+                    onValueChange = {
                         searchQuery = it
                     },
                     placeholder = {
@@ -214,7 +216,7 @@ fun HomeScreen(
                     },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { 
+                            IconButton(onClick = {
                                 searchQuery = ""
                                 viewModel.loadAllCars()
                             }) {
@@ -289,9 +291,9 @@ fun HomeScreen(
                         brandName = "All",
                         iconRes = R.drawable.all,
                         isSelected = selectedBrand == "All",
-                        onClick = { 
+                        onClick = {
                             selectedBrand = "All"
-                            expandedBrands = !expandedBrands 
+                            expandedBrands = !expandedBrands
                         }
                     )
                 }
@@ -347,7 +349,7 @@ fun HomeScreen(
                     fontWeight = FontWeight.SemiBold,
                     color = Color.Black
                 )
-                
+
                 if (carUiState is CarUiState.Loading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
@@ -356,9 +358,9 @@ fun HomeScreen(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             // Show loading or error state
             when (carUiState) {
                 is CarUiState.Loading -> {
@@ -405,17 +407,12 @@ fun HomeScreen(
                                 text = (carUiState as CarUiState.Error).message,
                                 fontFamily = poppins,
                                 fontWeight = FontWeight.Medium,
-                                color = Color.Red
+                                color = Color.Red,
+                                textAlign = TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
                             Button(
-                                onClick = { 
-                                    if (selectedBrand == "All") {
-                                        viewModel.loadAllCars()
-                                    } else {
-                                        viewModel.filterByBrand(selectedBrand)
-                                    }
-                                },
+                                onClick = { viewModel.loadAllCars() },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(0xFF149459)
                                 )
@@ -428,7 +425,7 @@ fun HomeScreen(
                 else -> {
                     // Display cars if we have them
                     if (cars.isNotEmpty()) {
-                        CarListSection(cars, onCarClick)
+                        CarListSection1(cars, onCarClick, onBookNowClick)
                     } else {
                         // No cars found
                         Box(
@@ -473,7 +470,7 @@ fun CarBrandItem(
         brandName != "All" && isSelected -> true   // Other brand is selected, show border
         else -> false                              // Not selected, no border
     }
-    
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -515,7 +512,8 @@ fun CarBrandItem(
 @Composable
 fun CarItem(
     car: com.example.myapplication.data.model.Car,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onBookNowClick: () -> Unit = onClick
 ) {
     // State to track if this car is favorited
     var isFavorite by remember { mutableStateOf(false) }
@@ -659,13 +657,13 @@ fun CarItem(
                         icon = Icons.Outlined.Settings,
                         text = car.type
                     )
-                    
+
                     // Transmission
                     FeatureItem(
                         icon = Icons.Outlined.Speed,
                         text = car.transmission
                     )
-                    
+
                     // Fuel
                     FeatureItem(
                         icon = Icons.Outlined.LocalGasStation,
@@ -677,7 +675,7 @@ fun CarItem(
 
                 // Book button
                 Button(
-                    onClick = onClick,
+                    onClick = onBookNowClick,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF149459)
                     ),
@@ -710,9 +708,9 @@ fun FeatureItem(
             tint = Color(0xFF149459),
             modifier = Modifier.size(24.dp)
         )
-        
+
         Spacer(modifier = Modifier.height(4.dp))
-        
+
         Text(
             text = text,
             fontSize = 14.sp,
@@ -821,11 +819,16 @@ fun BottomNavItem(
 }
 
 @Composable
-fun CarListSection(cars: List<com.example.myapplication.data.model.Car>, onCarClick: (String) -> Unit = {}) {
+fun CarListSection(
+    cars: List<com.example.myapplication.data.model.Car>,
+    onCarClick: (String) -> Unit = {},
+    onBookNowClick: (String) -> Unit = { carId -> onCarClick(carId) }
+) {
     cars.forEach { car ->
         CarItem(
             car = car,
-            onClick = { onCarClick(car.id.toString()) }
+            onClick = { onCarClick(car.id.toString()) },
+            onBookNowClick = { onBookNowClick(car.id.toString()) }
         )
         Spacer(modifier = Modifier.height(16.dp))
     }

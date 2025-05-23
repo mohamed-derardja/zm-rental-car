@@ -1,16 +1,6 @@
 package com.example.myapplication.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -49,15 +39,12 @@ import com.example.myapplication.ui.screens.welcome.ThirdScreen
 import com.example.myapplication.ui.screens.splashscreen.SplashScreenSequence
 import com.example.myapplication.ui.screens.auth.CompleteProfileScreen
 import com.example.myapplication.ui.screens.home.CarBookingScreen as HomeCarBookingScreen
-import com.example.myapplication.ui.screens.payment.CarBookingScreen as PaymentCarBookingScreen
+import com.example.myapplication.ui.screens.payment.CompleteYourBookingScreen
 import com.example.myapplication.ui.screens.password.ChangePasswordScreen
 import com.example.myapplication.ui.screens.auth.OTPVerificationScreen
 import com.example.myapplication.ui.screens.auth.ForgotPasswordScreen
 import com.example.myapplication.ui.screens.auth.ResetPasswordScreen
 import androidx.hilt.navigation.compose.hiltViewModel
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
  * Enum class that contains all the possible screens in our app
@@ -269,12 +256,19 @@ fun NavGraph(
         // Main Screens
         composable(Screen.Home.name) {
             HomeScreen(
-                onCarClick = { carId -> navController.navigate("${Screen.CarDetails.name}/$carId") },
+                onCarClick = { carId -> 
+                    // Navigate to car details
+                    navController.navigate("${Screen.CarDetails.name}/$carId")
+                },
                 onProfileClick = { navController.navigate(Screen.Profile.name) },
                 onFavoriteClick = { navController.navigate(Screen.Favorite.name) },
                 onFilterClick = { navController.navigate(Screen.Filter.name) },
                 onNotificationClick = { navController.navigate(Screen.Notification.name) },
-                onCatalogClick = { navController.navigate(Screen.MyBooking.name) }
+                onCatalogClick = { navController.navigate(Screen.MyBooking.name) },
+                onBookNowClick = { carId ->
+                    // Navigate directly to booking screen
+                    navController.navigate("${Screen.CarBooking.name}/$carId")
+                }
             )
         }
 
@@ -423,15 +417,22 @@ fun NavGraph(
             HomeCarBookingScreen(
                 car = mockCar,
                 onBackPressed = { navController.popBackStack() },
-                onContinue = { navController.navigate(Screen.CompleteYourBooking.name) }
+                onContinue = { navController.navigate("${Screen.CompleteYourBooking.name}/$mockCar.id") }
             )
         }
 
-        composable(Screen.CompleteYourBooking.name) {
-            PaymentCarBookingScreen(
+        composable(
+            route = "${Screen.CompleteYourBooking.name}/{carId}",
+            arguments = listOf(navArgument("carId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val carId = backStackEntry.arguments?.getString("carId") ?: ""
+            CompleteYourBookingScreen(
+                carId = carId,
                 onBackClick = { navController.popBackStack() },
-                onContinueClick = { navController.navigate(Screen.PaymentMethod.name) },
-                onRebookClick = { navController.navigate("${Screen.CarDetails.name}/1") }
+                onBookingComplete = { bookingId ->
+                    // Navigate to payment method after booking is complete
+                    navController.navigate(Screen.PaymentMethod.name)
+                }
             )
         }
 
@@ -442,8 +443,8 @@ fun NavGraph(
                 onHomeClick = { navController.navigateAndClear(Screen.Home.name) },
                 onBookingsClick = { navController.navigate(Screen.MyBooking.name) },
                 onProfileClick = { navController.navigate(Screen.Profile.name) },
-                onCarClick = { carId -> 
-                    navController.navigate("${Screen.CarDetails.name}/$carId")
+                onCarClick = { carId ->
+                    navController.navigate("car_details/$carId")
                 }
             )
         }
